@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Purview Diagnostics — Feedback Intake</title>
+<style>
+  :root { --blue:#0078d4; --blue-dark:#005a9e; --green:#107c10; --red:#d13438; --orange:#ff8c00; --bg:#0d1117; --card:#161b22; --card-hover:#1c2333; --border:#30363d; --text:#c9d1d9; --text-bright:#e6edf3; --accent:#58a6ff; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  /* Header */
+  .header { background:linear-gradient(135deg,#161b22 0%,#0d1117 100%); border-bottom:1px solid var(--border); padding:20px 32px; display:flex; align-items:center; gap:16px; }
+  .header .logo { font-size:28px; }
+  .header h1 { font-size:20px; color:var(--text-bright); font-weight:600; }
+  .header p { font-size:12px; color:var(--text); opacity:.7; }
+
+  /* Layout */
+  .container { display:grid; grid-template-columns:1fr 360px; gap:0; min-height:calc(100vh - 70px); }
+  @media(max-width:900px) { .container { grid-template-columns:1fr; } }
+
+  /* Main area */
+  .main { padding:24px 32px; overflow-y:auto; }
+
+  /* Sidebar */
+  .sidebar { background:var(--card); border-left:1px solid var(--border); padding:20px; overflow-y:auto; max-height:calc(100vh - 70px); }
+  .sidebar h2 { font-size:14px; color:var(--text-bright); margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+
+  /* Black box input */
+  .input-zone { background:#000; border:2px solid var(--border); border-radius:12px; padding:20px; margin-bottom:20px; transition:border-color .2s; }
+  .input-zone:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px rgba(88,166,255,.15); }
+  .input-zone textarea { width:100%; min-height:200px; background:transparent; border:none; color:#e6edf3; font-size:14px; font-family:'Cascadia Code','Consolas',monospace; resize:vertical; outline:none; line-height:1.6; }
+  .input-zone textarea::placeholder { color:#484f58; }
+  .input-zone .toolbar { display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid #21262d; flex-wrap:wrap; align-items:center; }
+
+  /* File drop zone */
+  .drop-zone { border:2px dashed var(--border); border-radius:8px; padding:20px; text-align:center; cursor:pointer; transition:all .2s; margin-bottom:16px; }
+  .drop-zone:hover, .drop-zone.drag-over { border-color:var(--accent); background:rgba(88,166,255,.05); }
+  .drop-zone p { font-size:13px; color:var(--text); }
+  .drop-zone .icon { font-size:32px; margin-bottom:8px; }
+
+  /* Attached files */
+  .attachments { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .attachment { background:var(--card); border:1px solid var(--border); border-radius:6px; padding:6px 10px; font-size:12px; display:flex; align-items:center; gap:6px; }
+  .attachment .remove { cursor:pointer; color:var(--red); font-weight:700; }
+  .attachment img { max-height:40px; border-radius:4px; }
+
+  /* Buttons */
+  .btn { padding:8px 16px; border-radius:6px; border:none; font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; display:inline-flex; align-items:center; gap:6px; }
+  .btn-primary { background:var(--accent); color:#000; }
+  .btn-primary:hover { background:#79c0ff; }
+  .btn-green { background:var(--green); color:#fff; }
+  .btn-green:hover { background:#2ea043; }
+  .btn-red { background:rgba(248,81,73,.15); color:#f85149; border:1px solid rgba(248,81,73,.4); }
+  .btn-red:hover { background:rgba(248,81,73,.25); }
+  .btn-outline { background:transparent; color:var(--text); border:1px solid var(--border); }
+  .btn-outline:hover { background:var(--card); border-color:var(--accent); color:var(--accent); }
+  .btn-sm { padding:4px 10px; font-size:11px; }
+
+  /* Metadata form */
+  .meta-form { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
+  .meta-form label { font-size:12px; font-weight:600; color:var(--text-bright); display:block; margin-bottom:4px; }
+  .meta-form select, .meta-form input { width:100%; padding:6px 10px; background:var(--card); border:1px solid var(--border); border-radius:4px; color:var(--text); font-size:12px; }
+  .meta-form select:focus, .meta-form input:focus { border-color:var(--accent); outline:none; }
+
+  /* Feed items */
+  .feed-item { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:10px; cursor:pointer; transition:all .15s; }
+  .feed-item:hover { background:var(--card-hover); border-color:var(--accent); }
+  .feed-item.selected { border-color:var(--accent); box-shadow:0 0 0 2px rgba(88,166,255,.2); }
+  .feed-item .title { font-size:13px; color:var(--text-bright); font-weight:600; margin-bottom:4px; }
+  .feed-item .meta { font-size:11px; color:var(--text); opacity:.6; }
+  .feed-item .preview { font-size:12px; color:var(--text); opacity:.8; margin-top:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+
+  /* Tags */
+  .tag { display:inline-block; font-size:10px; font-weight:600; padding:2px 7px; border-radius:10px; margin-right:4px; }
+  .tag-accuracy { background:rgba(248,81,73,.15); color:#f85149; }
+  .tag-relevance { background:rgba(255,140,0,.15); color:#ff8c00; }
+  .tag-ux { background:rgba(88,166,255,.15); color:#58a6ff; }
+  .tag-missing { background:rgba(3,131,135,.15); color:#39d2c0; }
+  .tag-language { background:rgba(202,80,16,.15); color:#e3892f; }
+  .tag-positive { background:rgba(16,124,16,.15); color:#3fb950; }
+
+  /* Status indicator */
+  .status-dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:4px; }
+  .status-new { background:var(--accent); }
+  .status-analyzed { background:var(--green); }
+  .status-exported { background:var(--orange); }
+
+  /* Preview panel */
+  .preview-panel { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:16px; margin-top:12px; display:none; }
+  .preview-panel.active { display:block; }
+  .preview-panel h3 { font-size:14px; color:var(--text-bright); margin-bottom:8px; }
+  .preview-panel .field { margin-bottom:10px; }
+  .preview-panel .field-label { font-size:11px; font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:.5px; margin-bottom:2px; }
+  .preview-panel .field-value { font-size:13px; color:var(--text); }
+  .preview-panel .screenshot-preview { max-width:100%; border-radius:6px; border:1px solid var(--border); margin-top:4px; }
+
+  /* Toast */
+  .toast { position:fixed; bottom:20px; right:20px; background:var(--green); color:#fff; padding:12px 20px; border-radius:8px; font-size:13px; font-weight:600; z-index:100; display:none; animation:slideIn .3s; }
+  @keyframes slideIn { from { transform:translateY(20px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+
+  /* Counter badge */
+  .counter { background:var(--accent); color:#000; font-size:11px; font-weight:700; padding:1px 6px; border-radius:10px; margin-left:6px; }
+
+  /* Empty state */
+  .empty-state { text-align:center; padding:40px 20px; color:var(--text); opacity:.5; }
+  .empty-state .icon { font-size:48px; margin-bottom:12px; }
+</style>
+</head>
+<body>
+
+<nav style="background:#0d1117;padding:8px 32px;display:flex;gap:16px;align-items:center;border-bottom:1px solid #30363d">
+  <a href="index.html" style="color:#c9d1d9;font-size:13px;font-weight:600;text-decoration:none;padding:4px 12px;border-radius:4px">?? Dashboard</a>
+  <a href="feedback-intake.html" style="color:#fff;font-size:13px;font-weight:600;text-decoration:none;padding:4px 12px;border-radius:4px;background:rgba(88,166,255,.15)">?? Feedback Intake</a>
+  <span style="margin-left:auto;color:rgba(255,255,255,.4);font-size:11px">GitHub Pages Site</span>
+</nav>
+<div class="header">
+  <div class="logo">🧪</div>
+  <div>
+    <h1>Purview Diagnostics — Feedback Intake</h1>
+    <p>Capture raw testing feedback → Export for dashboard analysis</p>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button class="btn btn-outline" onclick="exportForAnalysis()">📤 Export for Copilot Analysis</button>
+    <button class="btn btn-green" onclick="exportJSON()">💾 Save All Data</button>
+  </div>
+</div>
+
+<div class="container">
+  <!-- Main Input Area -->
+  <div class="main">
+    <!-- Quick metadata -->
+    <div class="meta-form">
+      <div>
+        <label>📁 Area Being Tested</label>
+        <select id="meta-area">
+          <option value="dlp">🛡️ DLP Policies</option>
+          <option value="labels">🏷️ Sensitivity Labels</option>
+          <option value="encryption">🔒 Email Encryption</option>
+          <option value="ediscovery">🔍 eDiscovery</option>
+          <option value="general">📋 General / Help Pane UX</option>
+        </select>
+      </div>
+      <div>
+        <label>🖥️ Entry Point Tested</label>
+        <select id="meta-entry">
+          <option value="help-pane-admin">Help Pane — M365 Admin Center</option>
+          <option value="help-pane-purview">Help Pane — Purview Portal</option>
+          <option value="solutions-page">Solutions Page — Purview Portal</option>
+        </select>
+      </div>
+      <div>
+        <label>🏷️ Diagnostic Tested</label>
+        <select id="meta-diagnostic">
+          <option value="general">General / Not specific</option>
+          <optgroup label="Solutions Page">
+            <option value="sol-encryption">Email encryption — licenses/settings</option>
+            <option value="sol-label-user">User can't find sensitivity label</option>
+            <option value="sol-autolabel">Autolabeling not applied</option>
+            <option value="sol-dlp-enforce">DLP rule not enforced for user</option>
+            <option value="sol-dlp-endpoint">Endpoint DLP policy sync</option>
+            <option value="sol-dlp-alerts">DLP alerts not working</option>
+            <option value="sol-dlp-alert-missing">Can't find alert for activity</option>
+            <option value="sol-dlp-file">DLP rule not triggering for file</option>
+            <option value="sol-dlp-tips">Policy tips in OWA (HAR)</option>
+            <option value="sol-dlp-email">DLP rule for Exchange email</option>
+          </optgroup>
+          <optgroup label="Help Pane">
+            <option value="help-archive">Archive mailbox</option>
+            <option value="help-retention">Retention policy</option>
+            <option value="help-holds">Mailbox holds</option>
+            <option value="help-ediscovery">eDiscovery RBAC</option>
+            <option value="help-dlp-config">DLP policy & rule config</option>
+            <option value="help-dlp-tips">DLP policy tips config</option>
+            <option value="help-labels">Sensitivity label config</option>
+            <option value="help-ome">Message Encryption config</option>
+            <option value="help-audit">Audit configuration</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label>⚡ Quick Category</label>
+        <select id="meta-category">
+          <option value="auto">🤖 Auto-detect from text</option>
+          <option value="accuracy">🔴 Accuracy — Wrong/misleading result</option>
+          <option value="relevance">🟠 Relevance — Not asking right questions</option>
+          <option value="ux">🔵 UX — Confusing flow</option>
+          <option value="missing">🟢 Missing — Feature/check unavailable</option>
+          <option value="language">🟤 Language — Jargon/unclear text</option>
+          <option value="positive">✅ Positive — Something that works well</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Black Box Input -->
+    <div class="input-zone">
+      <textarea id="raw-input" placeholder="Paste your raw feedback here...
+
+Examples of what to paste:
+• What you tested and what happened
+• The question you asked the diagnostic
+• What the diagnostic responded with
+• What was wrong or missing
+• Copy-paste from the Support Assistant conversation
+• Error messages or unexpected behavior
+• Your improvement suggestions
+
+Just dump everything — it will be analyzed later."></textarea>
+      <div class="toolbar">
+        <button class="btn btn-sm btn-outline" onclick="insertTemplate('test-result')">📋 Test Result Template</button>
+        <button class="btn btn-sm btn-outline" onclick="insertTemplate('conversation')">💬 Conversation Template</button>
+        <button class="btn btn-sm btn-outline" onclick="insertTemplate('bug')">🐛 Bug Template</button>
+        <button class="btn btn-sm btn-outline" onclick="clearInput()">🗑️ Clear</button>
+        <div style="flex:1"></div>
+        <span style="font-size:11px;color:#484f58" id="char-count">0 chars</span>
+      </div>
+    </div>
+
+    <!-- File Drop Zone -->
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="icon">📎</div>
+      <p><strong>Drop files here</strong> or click to attach</p>
+      <p style="font-size:11px;opacity:.6;margin-top:4px">Screenshots (.png, .jpg), Transcripts (.html, .txt), Logs (.csv)</p>
+      <input type="file" id="file-input" multiple accept=".png,.jpg,.jpeg,.gif,.html,.htm,.txt,.csv" style="display:none" onchange="handleFiles(this.files)">
+    </div>
+    <div class="attachments" id="attachments"></div>
+
+    <!-- Submit -->
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-primary" onclick="submitFeedback()" style="flex:1;justify-content:center;padding:12px;font-size:14px">
+        ➕ Capture Feedback Entry
+      </button>
+    </div>
+  </div>
+
+  <!-- Sidebar: Feed -->
+  <div class="sidebar">
+    <h2>📬 Captured Entries <span class="counter" id="entry-count">0</span></h2>
+    <div style="display:flex;gap:6px;margin-bottom:12px">
+      <button class="btn btn-sm btn-outline" onclick="filterFeed('all')" style="flex:1">All</button>
+      <button class="btn btn-sm btn-outline" onclick="filterFeed('new')" style="flex:1">New</button>
+      <button class="btn btn-sm btn-outline" onclick="filterFeed('analyzed')" style="flex:1">Analyzed</button>
+    </div>
+    <div id="feed-list">
+      <div class="empty-state">
+        <div class="icon">📭</div>
+        <p>No entries yet.<br>Start testing and capture your findings!</p>
+      </div>
+    </div>
+
+    <!-- Preview panel -->
+    <div class="preview-panel" id="preview-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3 id="preview-title">Entry Details</h3>
+        <button class="btn btn-sm btn-red" onclick="deleteEntry()">🗑️ Delete</button>
+      </div>
+      <div id="preview-content"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== STATE ====================
+let entries = JSON.parse(localStorage.getItem('purview-intake') || '[]');
+let attachedFiles = [];
+let selectedEntryId = null;
+
+// Pre-load the DLP test finding
+if (entries.length === 0) {
+  entries.push({
+    id: 'entry-preload-1',
+    timestamp: '2026-05-13T02:11:00Z',
+    area: 'dlp',
+    entryPoint: 'help-pane-admin',
+    diagnostic: 'general',
+    category: 'accuracy',
+    rawText: `TESTED: Help Pane in M365 Admin Center
+QUESTION ASKED: "user unable to edit the DLP policy"
+AGENT RESPONSE: 
+1. Agent asked: "How can I help you today to get you the right help and support?" (generic open-ended)
+2. I typed: "user unable to edit the DLP policy"
+3. Agent asked: "Can you please confirm if the issue is with Microsoft Purview Compliance" (subjective confirmation)
+4. I said: "yes"
+5. Agent responded with: "Change a name and email address" — instructions about changing user name/email in M365 Admin Center
+
+PROBLEMS:
+- Response is COMPLETELY WRONG — I asked about DLP policy editing, got user name change instructions
+- No diagnostic was triggered despite "DLP" and "policy" being exact keywords for existing diagnostics
+- Agent gave up after wrong answer: "May I assist you with anything else?"
+- The "More Help" section at bottom had the right links (DLP policy tips, Self-Help Diagnostics) but agent didn't guide me there
+- Confirmation question "is this Microsoft Purview Compliance" added no value
+
+WHAT SHOULD HAVE HAPPENED:
+- Detect "DLP" + "policy" + "unable to edit" keywords
+- Ask: "What specifically is happening?" with options: [Permission error] [Policy won't save] [Policy not found] [Other]
+- Based on answer, run the appropriate DLP diagnostic automatically`,
+    files: [],
+    status: 'new',
+    autoTags: ['accuracy', 'relevance', 'ux']
+  });
+  saveEntries();
+}
+
+// ==================== TEMPLATES ====================
+const templates = {
+  'test-result': `TEST: [Diagnostic name]
+ENTRY POINT: [Solutions page / Help pane - Admin Center / Help pane - Purview]
+QUESTION ASKED: [What I typed or selected]
+
+AGENT RESPONSE:
+[Paste what the agent said/showed]
+
+RESULT: [Pass / Partial / Fail]
+
+ISSUES FOUND:
+- [Issue 1]
+- [Issue 2]
+
+WHAT SHOULD HAVE HAPPENED:
+[Expected behavior]
+
+SUGGESTION FOR PG:
+[Your improvement recommendation]`,
+
+  'conversation': `CONVERSATION FLOW:
+AGENT: [First message]
+ME: [My question]
+AGENT: [Response]
+ME: [Follow-up]
+AGENT: [Response]
+
+PROBLEMS WITH THIS CONVERSATION:
+- [Problem 1]
+- [Problem 2]
+
+EXPECTED CONVERSATION:
+AGENT: [What it should have said]
+ME: [My question]
+AGENT: [Better response]`,
+
+  'bug': `BUG: [Short description]
+SEVERITY: [Critical / High / Medium / Low]
+STEPS TO REPRODUCE:
+1. [Step 1]
+2. [Step 2]
+3. [Step 3]
+
+ACTUAL RESULT:
+[What happened]
+
+EXPECTED RESULT:
+[What should have happened]
+
+SCREENSHOTS: [attached]`
+};
+
+// ==================== FUNCTIONS ====================
+
+function insertTemplate(name) {
+  const ta = document.getElementById('raw-input');
+  ta.value = templates[name];
+  ta.focus();
+  updateCharCount();
+}
+
+function clearInput() {
+  document.getElementById('raw-input').value = '';
+  attachedFiles = [];
+  renderAttachments();
+  updateCharCount();
+}
+
+function updateCharCount() {
+  document.getElementById('char-count').textContent = document.getElementById('raw-input').value.length + ' chars';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('raw-input').addEventListener('input', updateCharCount);
+  setupDropZone();
+  renderFeed();
+});
+
+function setupDropZone() {
+  const dz = document.getElementById('drop-zone');
+  ['dragenter','dragover'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add('drag-over'); }));
+  ['dragleave','drop'].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove('drag-over'); }));
+  dz.addEventListener('drop', ev => handleFiles(ev.dataTransfer.files));
+}
+
+function handleFiles(files) {
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const entry = {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        data: e.target.result
+      };
+      // If it's an HTML transcript, also extract text
+      if (file.name.endsWith('.html') || file.name.endsWith('.htm')) {
+        entry.parsedText = extractTranscriptText(e.target.result);
+      }
+      attachedFiles.push(entry);
+      renderAttachments();
+    };
+    if (file.type.startsWith('image/')) {
+      reader.readAsDataURL(file);
+    } else {
+      reader.readAsText(file);
+    }
+  });
+}
+
+function extractTranscriptText(html) {
+  const match = html.match(/const messages = (\[.*?\]);/s);
+  if (!match) return null;
+  try {
+    const msgs = JSON.parse(match[1]);
+    let text = '';
+    msgs.forEach(m => {
+      if (!m.content || m.content.startsWith('{')) return;
+      const role = m.isFromAgent ? 'AGENT' : 'USER';
+      text += `${role}: ${m.content}\n`;
+    });
+    return text;
+  } catch(e) { return null; }
+}
+
+function renderAttachments() {
+  const container = document.getElementById('attachments');
+  container.innerHTML = attachedFiles.map((f, i) => {
+    const icon = f.type.startsWith('image/') ? '🖼️' : f.name.endsWith('.html') ? '📄' : '📎';
+    const preview = f.type.startsWith('image/') ? `<img src="${f.data}" alt="${f.name}">` : '';
+    return `<div class="attachment">
+      ${preview}
+      <span>${icon} ${f.name} (${(f.size/1024).toFixed(1)}KB)</span>
+      <span class="remove" onclick="removeFile(${i})">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function removeFile(idx) {
+  attachedFiles.splice(idx, 1);
+  renderAttachments();
+}
+
+function submitFeedback() {
+  const rawText = document.getElementById('raw-input').value.trim();
+  if (!rawText && attachedFiles.length === 0) {
+    showToast('⚠️ Please enter feedback text or attach a file', '#d29922');
+    return;
+  }
+
+  const catSelect = document.getElementById('meta-category').value;
+  const autoTags = catSelect === 'auto' ? detectCategories(rawText) : [catSelect];
+
+  const entry = {
+    id: 'entry-' + Date.now(),
+    timestamp: new Date().toISOString(),
+    area: document.getElementById('meta-area').value,
+    entryPoint: document.getElementById('meta-entry').value,
+    diagnostic: document.getElementById('meta-diagnostic').selectedOptions[0].text,
+    diagnosticValue: document.getElementById('meta-diagnostic').value,
+    category: autoTags[0] || 'ux',
+    rawText: rawText,
+    files: attachedFiles.map(f => ({
+      name: f.name,
+      type: f.type,
+      size: f.size,
+      data: f.type.startsWith('image/') ? f.data : null,
+      parsedText: f.parsedText || null
+    })),
+    status: 'new',
+    autoTags: autoTags
+  };
+
+  entries.push(entry);
+  saveEntries();
+  renderFeed();
+
+  // Reset form
+  document.getElementById('raw-input').value = '';
+  attachedFiles = [];
+  renderAttachments();
+  updateCharCount();
+
+  showToast('✅ Feedback captured! Entry #' + entries.length);
+}
+
+function detectCategories(text) {
+  const tags = [];
+  const lower = text.toLowerCase();
+  if (lower.match(/wrong|incorrect|irrelevant|unrelated|misleading|false|inaccurate/)) tags.push('accuracy');
+  if (lower.match(/generic|open.?ended|subjective|not.?ask|didn.?t ask|vague|not relevant/)) tags.push('relevance');
+  if (lower.match(/confus|unclear flow|hard to find|ux|interface|navigation|unintuitive/)) tags.push('ux');
+  if (lower.match(/missing|not available|no diagnostic|doesn.?t check|gap|absent|lacking/)) tags.push('missing');
+  if (lower.match(/jargon|technical term|unclear text|language|wording|terminology/)) tags.push('language');
+  if (lower.match(/works well|good|helpful|correct|accurate|nice|positive/)) tags.push('positive');
+  if (lower.match(/gave up|anything else|didn.?t try|no retry|no follow.?up/)) tags.push('ux');
+  if (tags.length === 0) tags.push('ux');
+  return [...new Set(tags)];
+}
+
+function saveEntries() {
+  // Save without large image data to keep localStorage manageable
+  const lite = entries.map(e => ({
+    ...e,
+    files: e.files.map(f => ({...f, data: f.data ? '[image-data]' : null}))
+  }));
+  localStorage.setItem('purview-intake', JSON.stringify(entries));
+}
+
+function renderFeed(filter) {
+  const list = document.getElementById('feed-list');
+  const filtered = filter && filter !== 'all' ? entries.filter(e => e.status === filter) : entries;
+  document.getElementById('entry-count').textContent = entries.length;
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No entries${filter ? ' with status "'+filter+'"' : ''}.</p></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.slice().reverse().map(e => {
+    const areaIcons = {dlp:'🛡️',labels:'🏷️',encryption:'🔒',ediscovery:'🔍',general:'📋'};
+    const tags = (e.autoTags || [e.category]).map(t => `<span class="tag tag-${t}">${t}</span>`).join('');
+    const time = new Date(e.timestamp).toLocaleString('en-US', {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const preview = (e.rawText || '').substring(0, 120);
+    const fileCount = (e.files || []).length;
+    return `<div class="feed-item ${selectedEntryId===e.id?'selected':''}" onclick="selectEntry('${e.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div class="title"><span class="status-dot status-${e.status}"></span>${areaIcons[e.area]||'📋'} ${e.diagnostic || 'General'}</div>
+        <span style="font-size:10px;color:var(--text);opacity:.5">${time}</span>
+      </div>
+      <div style="margin:4px 0">${tags}</div>
+      <div class="preview">${preview}${preview.length>=120?'...':''}</div>
+      ${fileCount ? `<div style="font-size:11px;margin-top:4px;color:var(--accent)">📎 ${fileCount} file${fileCount>1?'s':''} attached</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function filterFeed(status) {
+  renderFeed(status);
+}
+
+function selectEntry(id) {
+  selectedEntryId = id;
+  const entry = entries.find(e => e.id === id);
+  if (!entry) return;
+
+  const panel = document.getElementById('preview-panel');
+  const content = document.getElementById('preview-content');
+  panel.classList.add('active');
+
+  const areaLabels = {dlp:'DLP Policies',labels:'Sensitivity Labels',encryption:'Email Encryption',ediscovery:'eDiscovery',general:'General'};
+
+  let html = `
+    <div class="field"><div class="field-label">Area</div><div class="field-value">${areaLabels[entry.area]||entry.area}</div></div>
+    <div class="field"><div class="field-label">Entry Point</div><div class="field-value">${entry.entryPoint}</div></div>
+    <div class="field"><div class="field-label">Diagnostic</div><div class="field-value">${entry.diagnostic}</div></div>
+    <div class="field"><div class="field-label">Categories</div><div class="field-value">${(entry.autoTags||[]).map(t=>`<span class="tag tag-${t}">${t}</span>`).join(' ')}</div></div>
+    <div class="field"><div class="field-label">Status</div><div class="field-value"><span class="status-dot status-${entry.status}"></span>${entry.status}</div></div>
+    <div class="field">
+      <div class="field-label">Raw Feedback</div>
+      <div class="field-value" style="white-space:pre-wrap;font-family:'Cascadia Code',monospace;font-size:11px;background:#000;padding:10px;border-radius:6px;max-height:200px;overflow-y:auto">${escapeHtml(entry.rawText || '')}</div>
+    </div>
+  `;
+
+  if (entry.files && entry.files.length > 0) {
+    html += `<div class="field"><div class="field-label">Attachments (${entry.files.length})</div>`;
+    entry.files.forEach(f => {
+      if (f.data && f.data !== '[image-data]' && f.type && f.type.startsWith('image/')) {
+        html += `<img src="${f.data}" class="screenshot-preview" alt="${f.name}">`;
+      } else {
+        html += `<div style="font-size:12px;margin:4px 0">📎 ${f.name}${f.parsedText ? ' (transcript parsed)' : ''}</div>`;
+      }
+    });
+    html += `</div>`;
+  }
+
+  content.innerHTML = html;
+  renderFeed();
+}
+
+function deleteEntry() {
+  if (!selectedEntryId) return;
+  if (!confirm('Delete this entry?')) return;
+  entries = entries.filter(e => e.id !== selectedEntryId);
+  selectedEntryId = null;
+  saveEntries();
+  document.getElementById('preview-panel').classList.remove('active');
+  renderFeed();
+  showToast('🗑️ Entry deleted');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showToast(msg, color) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.background = color || 'var(--green)';
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 3000);
+}
+
+// ==================== EXPORT ====================
+
+function exportForAnalysis() {
+  const exportData = {
+    exportDate: new Date().toISOString(),
+    totalEntries: entries.length,
+    entries: entries.map(e => ({
+      id: e.id,
+      timestamp: e.timestamp,
+      area: e.area,
+      entryPoint: e.entryPoint,
+      diagnostic: e.diagnostic,
+      category: e.category,
+      autoTags: e.autoTags,
+      rawText: e.rawText,
+      status: e.status,
+      fileNames: (e.files||[]).map(f => f.name),
+      parsedTranscripts: (e.files||[]).filter(f => f.parsedText).map(f => f.parsedText)
+    }))
+  };
+
+  const json = JSON.stringify(exportData, null, 2);
+  downloadFile('purview-feedback-for-analysis.json', json, 'application/json');
+  showToast('📤 Exported! Share this file with Copilot CLI to update the dashboard');
+
+  // Also update status
+  entries.forEach(e => { if (e.status === 'new') e.status = 'exported'; });
+  saveEntries();
+  renderFeed();
+}
+
+function exportJSON() {
+  const json = JSON.stringify(entries, null, 2);
+  downloadFile('purview-intake-backup.json', json, 'application/json');
+  showToast('💾 Full backup saved');
+}
+
+function downloadFile(name, content, type) {
+  const blob = new Blob([content], {type});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// Load on start
+renderFeed();
+</script>
+</body>
+</html>
