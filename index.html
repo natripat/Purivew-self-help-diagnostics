@@ -1,642 +1,181 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Purview Self-Help Diagnostics — Review &amp; Testing Portal</title>
 <style>
-/* ===== CSS VARIABLES ===== */
 :root {
-  --bg: #f4f6f9;
-  --bg-card: #ffffff;
-  --bg-sidebar: #1b1f3b;
-  --bg-sidebar-hover: #2a2f54;
-  --bg-header: linear-gradient(135deg, #0078d4, #5c2d91);
-  --text: #1a1a1a;
-  --text-secondary: #555;
-  --text-sidebar: #c8ccd8;
-  --text-sidebar-active: #ffffff;
-  --border: #e0e0e0;
-  --accent: #0078d4;
-  --accent-light: #e8f4fd;
-  --success: #28a745;
-  --warning: #f0ad4e;
-  --danger: #dc3545;
-  --info: #17a2b8;
-  --shadow: 0 2px 8px rgba(0,0,0,0.08);
-  --shadow-lg: 0 4px 16px rgba(0,0,0,0.12);
-  --radius: 8px;
-  --radius-sm: 4px;
-  --sidebar-width: 260px;
-  --header-height: auto;
-  --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  --bg:#f4f6f9;--bg-card:#fff;--bg-sidebar:#1b1f3b;--bg-sidebar-hover:#2a2f54;
+  --bg-header:linear-gradient(135deg,#0078d4,#5c2d91);
+  --text:#1a1a1a;--text-secondary:#555;--text-sidebar:#c8ccd8;--text-sidebar-active:#fff;
+  --border:#e0e0e0;--accent:#0078d4;--accent-light:#e8f4fd;
+  --success:#28a745;--warning:#f0ad4e;--danger:#dc3545;--info:#17a2b8;
+  --shadow:0 2px 8px rgba(0,0,0,.08);--shadow-lg:0 4px 16px rgba(0,0,0,.12);
+  --radius:8px;--radius-sm:4px;--sidebar-width:260px;
+  --font:'Segoe UI',-apple-system,BlinkMacSystemFont,sans-serif;
 }
-
-[data-theme="dark"] {
-  --bg: #1a1a2e;
-  --bg-card: #16213e;
-  --text: #e0e0e0;
-  --text-secondary: #aaa;
-  --border: #2a2a4a;
-  --accent-light: #1a2a4a;
-  --shadow: 0 2px 8px rgba(0,0,0,0.3);
-  --shadow-lg: 0 4px 16px rgba(0,0,0,0.4);
-}
-
-/* ===== RESET & BASE ===== */
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; }
-body {
-  font-family: var(--font);
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
-  min-height: 100vh;
-  transition: background 0.3s, color 0.3s;
-}
-
-/* ===== SIDEBAR ===== */
-.sidebar {
-  width: var(--sidebar-width);
-  background: var(--bg-sidebar);
-  color: var(--text-sidebar);
-  position: fixed;
-  top: 0; left: 0; bottom: 0;
-  display: flex;
-  flex-direction: column;
-  z-index: 1000;
-  transition: transform 0.3s ease;
-  overflow-y: auto;
-}
-.sidebar-header {
-  padding: 20px 16px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.sidebar-logo { font-size: 16px; font-weight: 700; color: #fff; line-height: 1.3; }
-.sidebar-logo small { display: block; font-size: 11px; font-weight: 400; color: var(--text-sidebar); opacity: 0.7; }
-.theme-toggle {
-  background: rgba(255,255,255,0.1);
-  border: none;
-  color: #fff;
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 18px;
-  display: flex; align-items: center; justify-content: center;
-  transition: background 0.2s;
-  flex-shrink: 0;
-}
-.theme-toggle:hover { background: rgba(255,255,255,0.2); }
-
-.sidebar-nav { flex: 1; padding: 12px 0; }
-.sidebar-nav a {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 20px;
-  color: var(--text-sidebar);
-  text-decoration: none;
-  font-size: 14px;
-  transition: all 0.2s;
-  border-left: 3px solid transparent;
-  cursor: pointer;
-}
-.sidebar-nav a:hover { background: var(--bg-sidebar-hover); color: #fff; }
-.sidebar-nav a.active {
-  background: var(--bg-sidebar-hover);
-  color: var(--text-sidebar-active);
-  border-left-color: var(--accent);
-  font-weight: 600;
-}
-.sidebar-nav a .nav-icon { font-size: 18px; width: 24px; text-align: center; }
-
-.sidebar-footer {
-  padding: 16px 20px;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  font-size: 12px;
-  color: rgba(255,255,255,0.5);
-}
-.sidebar-footer a { color: var(--accent); text-decoration: none; }
-
-/* ===== HAMBURGER ===== */
-.hamburger {
-  display: none;
-  position: fixed;
-  top: 12px; left: 12px;
-  z-index: 1100;
-  background: var(--bg-sidebar);
-  border: none;
-  color: #fff;
-  width: 40px; height: 40px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: 22px;
-  align-items: center;
-  justify-content: center;
-  box-shadow: var(--shadow-lg);
-}
-.sidebar-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 999;
-}
-
-/* ===== MAIN CONTENT ===== */
-.main-content {
-  margin-left: var(--sidebar-width);
-  flex: 1;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-/* ===== HEADER ===== */
-.portal-header {
-  background: var(--bg-header);
-  color: #fff;
-  padding: 28px 32px 20px;
-}
-.portal-header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
-.portal-header .subtitle { font-size: 13px; opacity: 0.85; margin-bottom: 16px; }
-.quick-stats {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-.stat-item {
-  background: rgba(255,255,255,0.15);
-  padding: 8px 16px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  backdrop-filter: blur(4px);
-}
-.stat-item strong { font-size: 20px; display: block; }
-
-/* ===== TAB CONTENT ===== */
-.tab-content { padding: 24px 32px; flex: 1; }
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
-
-/* ===== COMMON COMPONENTS ===== */
-.card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow);
-  transition: background 0.3s, border-color 0.3s;
-}
-.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
-.card-title { font-size: 16px; font-weight: 600; }
-
-.badge {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-.badge-labels { background: #e8f5e9; color: #2e7d32; }
-.badge-encryption { background: #e3f2fd; color: #1565c0; }
-.badge-dlp { background: #fff3e0; color: #e65100; }
-.badge-ediscovery { background: #f3e5f5; color: #7b1fa2; }
-.badge-other { background: #eceff1; color: #546e7a; }
-.badge-critical { background: #dc3545; color: #fff; }
-.badge-high { background: #fd7e14; color: #fff; }
-.badge-medium { background: #ffc107; color: #333; }
-.badge-low { background: #28a745; color: #fff; }
-.badge-covered { background: #28a745; color: #fff; }
-.badge-partial { background: #f0ad4e; color: #333; }
-.badge-gap { background: #dc3545; color: #fff; }
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: var(--font);
-}
-.btn-primary { background: var(--accent); color: #fff; }
-.btn-primary:hover { background: #005a9e; }
-.btn-success { background: var(--success); color: #fff; }
-.btn-success:hover { background: #218838; }
-.btn-danger { background: var(--danger); color: #fff; }
-.btn-danger:hover { background: #c82333; }
-.btn-warning { background: var(--warning); color: #333; }
-.btn-secondary { background: #6c757d; color: #fff; }
-.btn-secondary:hover { background: #5a6268; }
-.btn-sm { padding: 4px 10px; font-size: 12px; }
-.btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
-.btn-outline:hover { background: var(--accent-light); }
-
-.filter-bar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.filter-bar select, .filter-bar input {
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-family: var(--font);
-  background: var(--bg-card);
-  color: var(--text);
-}
-
-.progress-bar-container {
-  background: var(--border);
-  border-radius: 10px;
-  height: 20px;
-  overflow: hidden;
-  margin-bottom: 16px;
-}
-.progress-bar {
-  height: 100%;
-  background: linear-gradient(90deg, var(--accent), #5c2d91);
-  border-radius: 10px;
-  transition: width 0.5s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  min-width: 30px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-th, td {
-  padding: 10px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--border);
-}
-th {
-  background: var(--accent-light);
-  font-weight: 600;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-.table-wrapper { overflow-x: auto; }
-
-textarea, select, input[type="text"], input[type="url"] {
-  font-family: var(--font);
-  font-size: 13px;
-  color: var(--text);
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 6px 10px;
-  transition: border-color 0.2s;
-}
-textarea:focus, select:focus, input:focus { outline: none; border-color: var(--accent); }
-textarea { resize: vertical; }
-
-.summary-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.summary-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  text-align: center;
-  box-shadow: var(--shadow);
-}
-.summary-card .num { font-size: 28px; font-weight: 700; }
-.summary-card .label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
-
-.gap-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
-.gap-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow);
-  position: relative;
-  overflow: hidden;
-}
-.gap-card .coverage-bar {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 4px;
-}
-.gap-card .coverage-bar.covered { background: var(--success); }
-.gap-card .coverage-bar.partial { background: var(--warning); }
-.gap-card .coverage-bar.gap { background: var(--danger); }
-.gap-card .issue-title { font-weight: 600; font-size: 14px; margin: 8px 0; }
-.gap-card .meta { font-size: 12px; color: var(--text-secondary); margin: 4px 0; }
-.gap-card .note { font-size: 12px; background: var(--accent-light); padding: 8px; border-radius: var(--radius-sm); margin-top: 8px; }
-
-.scenario-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  margin-bottom: 20px;
-  box-shadow: var(--shadow);
-  overflow: hidden;
-}
-.scenario-header {
-  padding: 16px 20px;
-  background: var(--accent-light);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.scenario-header:hover { opacity: 0.9; }
-.scenario-body { padding: 20px; display: none; }
-.scenario-body.open { display: block; }
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.step-list { list-style: none; counter-reset: step; }
-.step-list li { counter-increment: step; padding: 6px 0 6px 28px; position: relative; font-size: 13px; }
-.step-list li::before {
-  content: counter(step);
-  position: absolute; left: 0;
-  width: 20px; height: 20px;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 50%;
-  font-size: 11px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 600;
-}
-.expected-result {
-  background: #e8f5e9;
-  border-left: 4px solid var(--success);
-  padding: 12px;
-  border-radius: var(--radius-sm);
-  margin: 12px 0;
-  font-size: 13px;
-}
-[data-theme="dark"] .expected-result { background: #1b3a1b; }
-.grade-section { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
-.grade-question {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 8px;
-  font-size: 13px;
-}
-.grade-question select { min-width: 120px; }
-
-/* ===== STAR RATING ===== */
-.star-rating { display: inline-flex; gap: 2px; cursor: pointer; }
-.star-rating .star { font-size: 20px; color: #ddd; transition: color 0.2s; user-select: none; }
-.star-rating .star.filled { color: #f0ad4e; }
-.star-rating .star:hover, .star-rating .star:hover ~ .star { color: #f0ad4e; }
-
-/* ===== TRANSCRIPT VIEWER ===== */
-.transcript-viewer {
-  max-height: 300px;
-  overflow-y: auto;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-  background: #f8f9fa;
-  font-size: 13px;
-}
-[data-theme="dark"] .transcript-viewer { background: #0d1117; }
-.transcript-msg { padding: 8px 12px; margin: 4px 0; border-radius: var(--radius); }
-.transcript-msg.user { background: #e3f2fd; border-left: 3px solid var(--accent); }
-.transcript-msg.agent { background: #f3e5f5; border-left: 3px solid #7b1fa2; }
-[data-theme="dark"] .transcript-msg.user { background: #1a2a4a; }
-[data-theme="dark"] .transcript-msg.agent { background: #2a1a3a; }
-.transcript-msg .role { font-weight: 600; font-size: 11px; text-transform: uppercase; margin-bottom: 4px; }
-
-/* ===== FEEDBACK SECTION ===== */
-.finding-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow);
-}
-.finding-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.issue-list { list-style: none; padding: 0; }
-.issue-list li { padding: 4px 0 4px 20px; position: relative; font-size: 13px; }
-.issue-list li::before { content: '❌'; position: absolute; left: 0; }
-
-.improvement-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-.improvement-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 16px;
-  box-shadow: var(--shadow);
-}
-.improvement-card .ic-icon { font-size: 28px; margin-bottom: 8px; }
-.improvement-card .ic-title { font-weight: 600; margin-bottom: 8px; }
-.improvement-card .ic-desc { font-size: 13px; color: var(--text-secondary); }
-
-.feedback-stats {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-  margin-bottom: 20px;
-}
-.fb-stat {
-  text-align: center;
-  padding: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-.fb-stat .count { font-size: 24px; font-weight: 700; }
-.fb-stat .cat-label { font-size: 11px; color: var(--text-secondary); }
-
-/* ===== ADO LOG ===== */
-.ado-config {
-  background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 20px;
-}
-.ado-config .config-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 12px;
-}
-.ado-config label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; }
-.ado-config input, .ado-config select { width: 100%; }
-
-.detail-panel {
-  position: fixed;
-  top: 0; right: -500px; bottom: 0;
-  width: 480px;
-  background: var(--bg-card);
-  border-left: 1px solid var(--border);
-  box-shadow: var(--shadow-lg);
-  z-index: 1001;
-  transition: right 0.3s ease;
-  overflow-y: auto;
-  padding: 24px;
-}
-.detail-panel.open { right: 0; }
-.detail-panel .close-btn {
-  position: absolute;
-  top: 12px; right: 12px;
-  background: none; border: none;
-  font-size: 20px; cursor: pointer;
-  color: var(--text);
-}
-
-.evidence-drop {
-  border: 2px dashed var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  text-align: center;
-  color: var(--text-secondary);
-  font-size: 13px;
-  cursor: pointer;
-  transition: border-color 0.2s;
-  margin: 12px 0;
-}
-.evidence-drop:hover, .evidence-drop.dragover { border-color: var(--accent); background: var(--accent-light); }
-.evidence-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; margin-top: 8px; }
-.evidence-thumb {
-  width: 80px; height: 80px;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
-  border: 1px solid var(--border);
-}
-
-/* ===== INTAKE SECTION ===== */
-.intake-dark {
-  background: #0d1117 !important;
-  color: #c9d1d9 !important;
-  border-color: #30363d !important;
-}
-.intake-dark textarea {
-  background: #161b22;
-  color: #c9d1d9;
-  border-color: #30363d;
-  font-family: 'Consolas', monospace;
-}
-.intake-dark .btn-outline { border-color: #30363d; color: #c9d1d9; }
-.intake-layout { display: grid; grid-template-columns: 1fr 360px; gap: 20px; }
-.intake-entries { max-height: 600px; overflow-y: auto; }
-.intake-entry-card {
-  padding: 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  margin-bottom: 8px;
-  cursor: pointer;
-  transition: background 0.2s;
-  font-size: 13px;
-}
-.intake-entry-card:hover { background: var(--accent-light); }
-
-.file-drop-zone {
-  border: 2px dashed #30363d;
-  border-radius: var(--radius);
-  padding: 20px;
-  text-align: center;
-  color: #8b949e;
-  font-size: 13px;
-  cursor: pointer;
-  margin: 12px 0;
-}
-.file-drop-zone:hover, .file-drop-zone.dragover { border-color: var(--accent); }
-.template-btns { display: flex; gap: 8px; margin-bottom: 12px; }
-
-/* ===== RESPONSIVE ===== */
-@media (max-width: 768px) {
-  .sidebar { transform: translateX(-100%); }
-  .sidebar.open { transform: translateX(0); }
-  .sidebar-overlay.open { display: block; }
-  .hamburger { display: flex; }
-  .main-content { margin-left: 0; }
-  .portal-header { padding: 16px; padding-top: 56px; }
-  .portal-header h1 { font-size: 18px; }
-  .tab-content { padding: 16px; }
-  .two-col { grid-template-columns: 1fr; }
-  .gap-grid { grid-template-columns: 1fr; }
-  .intake-layout { grid-template-columns: 1fr; }
-  .feedback-stats { grid-template-columns: repeat(3, 1fr); }
-  .detail-panel { width: 100%; right: -100%; }
-  .quick-stats { gap: 8px; }
-  .stat-item { padding: 6px 10px; font-size: 12px; }
-  .stat-item strong { font-size: 16px; }
-}
+[data-theme="dark"]{--bg:#1a1a2e;--bg-card:#16213e;--text:#e0e0e0;--text-secondary:#aaa;--border:#2a2a4a;--accent-light:#1a2a4a;--shadow:0 2px 8px rgba(0,0,0,.3);--shadow-lg:0 4px 16px rgba(0,0,0,.4)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;min-height:100vh;transition:background .3s,color .3s}
+.sidebar{width:var(--sidebar-width);background:var(--bg-sidebar);color:var(--text-sidebar);position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:1000;transition:transform .3s ease;overflow-y:auto}
+.sidebar-header{padding:20px 16px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.sidebar-logo{font-size:16px;font-weight:700;color:#fff;line-height:1.3}
+.sidebar-logo small{display:block;font-size:11px;font-weight:400;color:var(--text-sidebar);opacity:.7}
+.theme-toggle{background:rgba(255,255,255,.1);border:none;color:#fff;width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0}
+.theme-toggle:hover{background:rgba(255,255,255,.2)}
+.sidebar-nav{flex:1;padding:12px 0}
+.sidebar-nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--text-sidebar);text-decoration:none;font-size:14px;transition:all .2s;border-left:3px solid transparent;cursor:pointer}
+.sidebar-nav a:hover{background:var(--bg-sidebar-hover);color:#fff}
+.sidebar-nav a.active{background:var(--bg-sidebar-hover);color:var(--text-sidebar-active);border-left-color:var(--accent);font-weight:600}
+.sidebar-nav a .nav-icon{font-size:18px;width:24px;text-align:center}
+.sidebar-footer{padding:16px 20px;border-top:1px solid rgba(255,255,255,.1);font-size:12px;color:rgba(255,255,255,.5)}
+.sidebar-footer a{color:var(--accent);text-decoration:none}
+.hamburger{display:none;position:fixed;top:12px;left:12px;z-index:1100;background:var(--bg-sidebar);border:none;color:#fff;width:40px;height:40px;border-radius:var(--radius-sm);cursor:pointer;font-size:22px;align-items:center;justify-content:center;box-shadow:var(--shadow-lg)}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999}
+.main-content{margin-left:var(--sidebar-width);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.portal-header{background:var(--bg-header);color:#fff;padding:28px 32px 20px}
+.portal-header h1{font-size:22px;font-weight:700;margin-bottom:4px}
+.portal-header .subtitle{font-size:13px;opacity:.85;margin-bottom:16px}
+.quick-stats{display:flex;gap:24px;flex-wrap:wrap}
+.stat-item{background:rgba(255,255,255,.15);padding:8px 16px;border-radius:var(--radius-sm);font-size:13px;backdrop-filter:blur(4px)}
+.stat-item strong{font-size:20px;display:block}
+.tab-content{padding:24px 32px;flex:1}
+.tab-panel{display:none}.tab-panel.active{display:block}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow);transition:background .3s,border-color .3s}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:8px;flex-wrap:wrap}
+.card-title{font-size:16px;font-weight:600}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+.badge-labels{background:#e8f5e9;color:#2e7d32}.badge-encryption{background:#e3f2fd;color:#1565c0}
+.badge-dlp{background:#fff3e0;color:#e65100}.badge-ediscovery{background:#f3e5f5;color:#7b1fa2}
+.badge-other{background:#eceff1;color:#546e7a}
+.badge-critical{background:#dc3545;color:#fff}.badge-high{background:#fd7e14;color:#fff}
+.badge-medium{background:#ffc107;color:#333}.badge-low{background:#28a745;color:#fff}
+.badge-covered{background:#28a745;color:#fff}.badge-partial{background:#f0ad4e;color:#333}.badge-gap{background:#dc3545;color:#fff}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:var(--font)}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#005a9e}
+.btn-success{background:var(--success);color:#fff}.btn-success:hover{background:#218838}
+.btn-danger{background:var(--danger);color:#fff}.btn-danger:hover{background:#c82333}
+.btn-warning{background:var(--warning);color:#333}
+.btn-secondary{background:#6c757d;color:#fff}.btn-secondary:hover{background:#5a6268}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}.btn-outline:hover{background:var(--accent-light)}
+.filter-bar{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-bar select,.filter-bar input{padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:var(--font);background:var(--bg-card);color:var(--text)}
+.progress-bar-container{background:var(--border);border-radius:10px;height:20px;overflow:hidden;margin-bottom:16px}
+.progress-bar{height:100%;background:linear-gradient(90deg,var(--accent),#5c2d91);border-radius:10px;transition:width .5s ease;display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:600;min-width:30px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border)}
+th{background:var(--accent-light);font-weight:600;position:sticky;top:0;z-index:1}
+.table-wrapper{overflow-x:auto}
+textarea,select,input[type="text"],input[type="url"]{font-family:var(--font);font-size:13px;color:var(--text);background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 10px;transition:border-color .2s}
+textarea:focus,select:focus,input:focus{outline:none;border-color:var(--accent)}
+textarea{resize:vertical}
+.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.summary-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;box-shadow:var(--shadow)}
+.summary-card .num{font-size:28px;font-weight:700}
+.summary-card .label{font-size:12px;color:var(--text-secondary);margin-top:4px}
+.gap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+.gap-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.gap-card .coverage-bar{position:absolute;top:0;left:0;right:0;height:4px}
+.gap-card .coverage-bar.covered{background:var(--success)}.gap-card .coverage-bar.partial{background:var(--warning)}.gap-card .coverage-bar.gap{background:var(--danger)}
+.gap-card .issue-title{font-weight:600;font-size:14px;margin:8px 0}
+.gap-card .meta{font-size:12px;color:var(--text-secondary);margin:4px 0}
+.gap-card .note{font-size:12px;background:var(--accent-light);padding:8px;border-radius:var(--radius-sm);margin-top:8px}
+.scenario-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:20px;box-shadow:var(--shadow);overflow:hidden}
+.scenario-header{padding:16px 20px;background:var(--accent-light);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.scenario-header:hover{opacity:.9}
+.scenario-body{padding:20px;display:none}.scenario-body.open{display:block}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.step-list{list-style:none;counter-reset:step}
+.step-list li{counter-increment:step;padding:6px 0 6px 28px;position:relative;font-size:13px}
+.step-list li::before{content:counter(step);position:absolute;left:0;width:20px;height:20px;background:var(--accent);color:#fff;border-radius:50%;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:600}
+.expected-result{background:#e8f5e9;border-left:4px solid var(--success);padding:12px;border-radius:var(--radius-sm);margin:12px 0;font-size:13px}
+[data-theme="dark"] .expected-result{background:#1b3a1b}
+.grade-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--border)}
+.grade-question{display:flex;align-items:center;gap:12px;margin-bottom:8px;font-size:13px}
+.grade-question select{min-width:120px}
+.star-rating{display:inline-flex;gap:2px;cursor:pointer}
+.star-rating .star{font-size:20px;color:#ddd;transition:color .2s;user-select:none}
+.star-rating .star.filled{color:#f0ad4e}
+.transcript-viewer{max-height:300px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius);padding:12px;background:#f8f9fa;font-size:13px}
+[data-theme="dark"] .transcript-viewer{background:#0d1117}
+.transcript-msg{padding:8px 12px;margin:4px 0;border-radius:var(--radius)}
+.transcript-msg.user{background:#e3f2fd;border-left:3px solid var(--accent)}
+.transcript-msg.agent{background:#f3e5f5;border-left:3px solid #7b1fa2}
+[data-theme="dark"] .transcript-msg.user{background:#1a2a4a}
+[data-theme="dark"] .transcript-msg.agent{background:#2a1a3a}
+.transcript-msg .role{font-weight:600;font-size:11px;text-transform:uppercase;margin-bottom:4px}
+.finding-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.finding-header{display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+.issue-list{list-style:none;padding:0}
+.issue-list li{padding:4px 0 4px 24px;position:relative;font-size:13px}
+.issue-list li::before{content:'\274c';position:absolute;left:0}
+.improvement-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.improvement-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.improvement-card .ic-icon{font-size:28px;margin-bottom:8px}
+.improvement-card .ic-title{font-weight:600;margin-bottom:8px}
+.improvement-card .ic-desc{font-size:13px;color:var(--text-secondary)}
+.feedback-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+.fb-stat{text-align:center;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius)}
+.fb-stat .count{font-size:24px;font-weight:700}
+.fb-stat .cat-label{font-size:11px;color:var(--text-secondary)}
+.ado-config{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.ado-config .config-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.ado-config label{display:block;font-size:12px;font-weight:600;margin-bottom:4px}
+.ado-config input,.ado-config select{width:100%}
+.detail-panel{position:fixed;top:0;right:-500px;bottom:0;width:480px;background:var(--bg-card);border-left:1px solid var(--border);box-shadow:var(--shadow-lg);z-index:1001;transition:right .3s ease;overflow-y:auto;padding:24px}
+.detail-panel.open{right:0}
+.detail-panel .close-btn{position:absolute;top:12px;right:12px;background:none;border:none;font-size:20px;cursor:pointer;color:var(--text)}
+.evidence-drop{border:2px dashed var(--border);border-radius:var(--radius);padding:24px;text-align:center;color:var(--text-secondary);font-size:13px;cursor:pointer;transition:border-color .2s;margin:12px 0}
+.evidence-drop:hover,.evidence-drop.dragover{border-color:var(--accent);background:var(--accent-light)}
+.evidence-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-top:8px}
+.evidence-thumb{width:80px;height:80px;border-radius:var(--radius-sm);object-fit:cover;border:1px solid var(--border)}
+.intake-dark{background:#0d1117!important;color:#c9d1d9!important;border-color:#30363d!important}
+.intake-dark textarea{background:#161b22;color:#c9d1d9;border-color:#30363d;font-family:'Consolas',monospace}
+.intake-layout{display:grid;grid-template-columns:1fr 360px;gap:20px}
+.intake-entries{max-height:600px;overflow-y:auto}
+.intake-entry-card{padding:12px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:8px;cursor:pointer;transition:background .2s;font-size:13px}
+.intake-entry-card:hover{background:var(--accent-light)}
+.file-drop-zone{border:2px dashed #30363d;border-radius:var(--radius);padding:20px;text-align:center;color:#8b949e;font-size:13px;cursor:pointer;margin:12px 0}
+.file-drop-zone:hover,.file-drop-zone.dragover{border-color:var(--accent)}
+.template-btns{display:flex;gap:8px;margin-bottom:12px}
+@media(max-width:768px){
+.sidebar{transform:translateX(-100%)}.sidebar.open{transform:translateX(0)}
+.sidebar-overlay.open{display:block}.hamburger{display:flex}
+.main-content{margin-left:0}.portal-header{padding:16px;padding-top:56px}
+.portal-header h1{font-size:18px}.tab-content{padding:16px}
+.two-col{grid-template-columns:1fr}.gap-grid{grid-template-columns:1fr}
+.intake-layout{grid-template-columns:1fr}.feedback-stats{grid-template-columns:repeat(3,1fr)}
+.detail-panel{width:100%;right:-100%}}
 </style>
 </head>
 <body>
-<!-- ===== HAMBURGER MENU ===== -->
+
+<!-- HAMBURGER -->
 <button class="hamburger" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
 <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<!-- ===== SIDEBAR ===== -->
+<!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-header">
-    <div class="sidebar-logo">
-      🔍 Purview Diagnostics
-      <small>Review & Testing Portal</small>
-    </div>
+    <div class="sidebar-logo">🔍 Purview Diagnostics<small>Review &amp; Testing Portal</small></div>
     <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" id="themeBtn">🌙</button>
   </div>
   <nav class="sidebar-nav">
-    <a onclick="switchTab('tracker')" class="active" data-tab="tracker">
-      <span class="nav-icon">📋</span> Test Tracker
-    </a>
-    <a onclick="switchTab('gaps')" data-tab="gaps">
-      <span class="nav-icon">📊</span> Gap Dashboard
-    </a>
-    <a onclick="switchTab('scenarios')" data-tab="scenarios">
-      <span class="nav-icon">🔧</span> Break &amp; Test Scenarios
-    </a>
-    <a onclick="switchTab('feedback')" data-tab="feedback">
-      <span class="nav-icon">💬</span> Feedback &amp; Improvements
-    </a>
-    <a onclick="switchTab('adolog')" data-tab="adolog">
-      <span class="nav-icon">📬</span> Feedback Log &amp; ADO
-    </a>
-    <a onclick="switchTab('intake')" data-tab="intake">
-      <span class="nav-icon">🎯</span> Feedback Intake
-    </a>
+    <a onclick="switchTab('tracker')" class="active" data-tab="tracker"><span class="nav-icon">📋</span> Test Tracker</a>
+    <a onclick="switchTab('gaps')" data-tab="gaps"><span class="nav-icon">📊</span> Gap Dashboard</a>
+    <a onclick="switchTab('scenarios')" data-tab="scenarios"><span class="nav-icon">🔧</span> Break &amp; Test Scenarios</a>
+    <a onclick="switchTab('feedback')" data-tab="feedback"><span class="nav-icon">💬</span> Feedback &amp; Improvements</a>
+    <a onclick="switchTab('adolog')" data-tab="adolog"><span class="nav-icon">📬</span> Feedback Log &amp; ADO</a>
+    <a onclick="switchTab('intake')" data-tab="intake"><span class="nav-icon">🎯</span> Feedback Intake</a>
   </nav>
-  <div class="sidebar-footer">
-    Owner: <a href="https://github.com/natripat" target="_blank">natripat</a><br>
-    <small>Microsoft Purview Review Tool</small>
-  </div>
+  <div class="sidebar-footer">Owner: <a href="https://github.com/natripat" target="_blank">natripat</a><br><small>Microsoft Purview Review Tool</small></div>
 </aside>
 
-<!-- ===== MAIN CONTENT ===== -->
+<!-- MAIN CONTENT -->
 <div class="main-content">
-  <!-- ===== HEADER ===== -->
   <header class="portal-header">
     <h1>Purview Self-Help Diagnostics — Review &amp; Testing Portal</h1>
     <div class="subtitle">Testing &amp; Feedback Tool for Microsoft Purview Self-Help Diagnostic Documentation Review</div>
@@ -647,10 +186,9 @@ textarea { resize: vertical; }
       <div class="stat-item"><strong id="statScenarios">15</strong>Scenarios</div>
     </div>
   </header>
-
   <div class="tab-content">
 
-    <!-- ===== TAB 1: TEST TRACKER ===== -->
+    <!-- TAB 1: TEST TRACKER -->
     <div class="tab-panel active" id="panel-tracker">
       <div class="card">
         <div class="card-header">
@@ -658,25 +196,12 @@ textarea { resize: vertical; }
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-primary btn-sm" onclick="exportTrackerCSV()">📥 Export CSV</button>
             <button class="btn btn-danger btn-sm" onclick="resetTracker()">🔄 Reset All</button>
-            <button class="btn btn-success btn-sm" onclick="saveTracker()">�� Save Progress</button>
+            <button class="btn btn-success btn-sm" onclick="saveTracker()">💾 Save Progress</button>
           </div>
         </div>
         <div class="filter-bar">
-          <select id="trackerAreaFilter" onchange="renderTracker()">
-            <option value="all">All Areas</option>
-            <option value="labels">Labels</option>
-            <option value="encryption">Encryption</option>
-            <option value="dlp">DLP</option>
-            <option value="ediscovery">eDiscovery</option>
-            <option value="other">Other</option>
-          </select>
-          <select id="trackerStatusFilter" onchange="renderTracker()">
-            <option value="all">All Status</option>
-            <option value="not-tested">Not Tested</option>
-            <option value="pass">Pass</option>
-            <option value="fail">Fail</option>
-            <option value="partial">Partial</option>
-          </select>
+          <select id="trackerAreaFilter" onchange="renderTracker()"><option value="all">All Areas</option><option value="labels">Labels</option><option value="encryption">Encryption</option><option value="dlp">DLP</option><option value="ediscovery">eDiscovery</option><option value="other">Other</option></select>
+          <select id="trackerStatusFilter" onchange="renderTracker()"><option value="all">All Status</option><option value="not-tested">Not Tested</option><option value="pass">Pass</option><option value="fail">Fail</option><option value="partial">Partial</option></select>
           <span id="trackerCount" style="font-size:13px;color:var(--text-secondary);"></span>
         </div>
         <div id="trackerProgress"></div>
@@ -684,201 +209,92 @@ textarea { resize: vertical; }
       </div>
     </div>
 
-    <!-- ===== TAB 2: GAP DASHBOARD ===== -->
+    <!-- TAB 2: GAP DASHBOARD -->
     <div class="tab-panel" id="panel-gaps">
       <div id="gapSummaryCards"></div>
       <div class="filter-bar">
-        <select id="gapAreaFilter" onchange="renderGaps()">
-          <option value="all">All Areas</option>
-          <option value="labels">Labels</option>
-          <option value="encryption">Encryption</option>
-          <option value="dlp">DLP</option>
-        </select>
-        <select id="gapCoverageFilter" onchange="renderGaps()">
-          <option value="all">All Coverage</option>
-          <option value="covered">Covered</option>
-          <option value="partial">Partial</option>
-          <option value="gap">Gap</option>
-        </select>
-        <select id="gapSeverityFilter" onchange="renderGaps()">
-          <option value="all">All Severity</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-        </select>
+        <select id="gapAreaFilter" onchange="renderGaps()"><option value="all">All Areas</option><option value="labels">Labels</option><option value="encryption">Encryption</option><option value="dlp">DLP</option></select>
+        <select id="gapCoverageFilter" onchange="renderGaps()"><option value="all">All Coverage</option><option value="covered">Covered</option><option value="partial">Partial</option><option value="gap">Gap</option></select>
+        <select id="gapSeverityFilter" onchange="renderGaps()"><option value="all">All Severity</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option></select>
       </div>
       <div class="gap-grid" id="gapGrid"></div>
     </div>
 
-    <!-- ===== TAB 3: BREAK & TEST SCENARIOS ===== -->
+    <!-- TAB 3: SCENARIOS -->
     <div class="tab-panel" id="panel-scenarios">
       <div class="card" style="border-left:4px solid var(--accent);margin-bottom:20px;">
         <strong>🔧 Break &amp; Test Methodology</strong>
         <p style="font-size:13px;margin-top:6px;color:var(--text-secondary);">Each scenario intentionally breaks a configuration, then runs the corresponding diagnostic to evaluate detection accuracy. Grade each question to build a quality scorecard.</p>
       </div>
       <div class="filter-bar">
-        <select id="scenarioAreaFilter" onchange="renderScenarios()">
-          <option value="all">All Areas</option>
-          <option value="labels">Labels</option>
-          <option value="encryption">Encryption</option>
-          <option value="dlp">DLP</option>
-        </select>
-        <select id="scenarioPriorityFilter" onchange="renderScenarios()">
-          <option value="all">All Priority</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-        </select>
+        <select id="scenarioAreaFilter" onchange="renderScenarios()"><option value="all">All Areas</option><option value="labels">Labels</option><option value="encryption">Encryption</option><option value="dlp">DLP</option></select>
+        <select id="scenarioPriorityFilter" onchange="renderScenarios()"><option value="all">All Priority</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option></select>
         <button class="btn btn-primary btn-sm" onclick="exportScenarioReport()">📥 Export Scenario Report</button>
       </div>
       <div id="scenarioList"></div>
     </div>
 
-    <!-- ===== TAB 4: FEEDBACK & IMPROVEMENTS ===== -->
+    <!-- TAB 4: FEEDBACK -->
     <div class="tab-panel" id="panel-feedback">
-      <!-- Transcript Upload -->
-      <div class="card">
-        <div class="card-title" style="margin-bottom:12px;">📝 Transcript Upload / Paste</div>
+      <div class="card"><div class="card-title" style="margin-bottom:12px;">📝 Transcript Upload / Paste</div>
         <textarea id="transcriptInput" rows="4" style="width:100%;" placeholder="Paste a support transcript here (User: / Agent: format)..."></textarea>
         <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="parseTranscript()">Parse Transcript</button>
         <div id="transcriptPreview" style="margin-top:12px;"></div>
       </div>
-
-      <!-- Pre-loaded Findings -->
       <h3 style="margin:20px 0 12px;">🔍 Pre-Loaded Findings</h3>
       <div id="preloadedFindings"></div>
-
-      <!-- Add New Feedback -->
       <div class="card" style="margin-top:20px;">
         <div class="card-title" style="margin-bottom:12px;">➕ Add New Feedback</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-          <div>
-            <label style="font-size:12px;font-weight:600;">Category</label>
-            <select id="fbCategory" style="width:100%;">
-              <option value="accuracy">Accuracy</option>
-              <option value="relevance">Relevance</option>
-              <option value="ux">UX</option>
-              <option value="missing">Missing Feature</option>
-              <option value="language">Language/Clarity</option>
-            </select>
-          </div>
-          <div>
-            <label style="font-size:12px;font-weight:600;">Diagnostic</label>
-            <select id="fbDiagnostic" style="width:100%;"></select>
-          </div>
-          <div>
-            <label style="font-size:12px;font-weight:600;">Impact (1-5)</label>
-            <div id="fbImpactStars" class="star-rating"></div>
-          </div>
-          <div>
-            <label style="font-size:12px;font-weight:600;">Transcript File</label>
-            <input type="file" id="fbTranscriptFile" accept=".txt,.json,.har" style="font-size:12px;">
-          </div>
+          <div><label style="font-size:12px;font-weight:600;">Category</label><select id="fbCategory" style="width:100%;"><option value="accuracy">Accuracy</option><option value="relevance">Relevance</option><option value="ux">UX</option><option value="missing">Missing Feature</option><option value="language">Language/Clarity</option></select></div>
+          <div><label style="font-size:12px;font-weight:600;">Diagnostic</label><select id="fbDiagnostic" style="width:100%;"></select></div>
+          <div><label style="font-size:12px;font-weight:600;">Impact (1-5)</label><div id="fbImpactStars" class="star-rating"></div></div>
+          <div><label style="font-size:12px;font-weight:600;">Transcript File</label><input type="file" id="fbTranscriptFile" accept=".txt,.json,.har" style="font-size:12px;"></div>
         </div>
-        <div style="margin-top:12px;">
-          <label style="font-size:12px;font-weight:600;">Question / What was asked</label>
-          <textarea id="fbQuestion" rows="2" style="width:100%;"></textarea>
-        </div>
-        <div style="margin-top:8px;">
-          <label style="font-size:12px;font-weight:600;">Actual Result</label>
-          <textarea id="fbActual" rows="2" style="width:100%;"></textarea>
-        </div>
-        <div style="margin-top:8px;">
-          <label style="font-size:12px;font-weight:600;">Expected Result</label>
-          <textarea id="fbExpected" rows="2" style="width:100%;"></textarea>
-        </div>
-        <div style="margin-top:8px;">
-          <label style="font-size:12px;font-weight:600;">Suggestion for Improvement</label>
-          <textarea id="fbSuggestion" rows="2" style="width:100%;"></textarea>
-        </div>
+        <div style="margin-top:12px;"><label style="font-size:12px;font-weight:600;">Question / What was asked</label><textarea id="fbQuestion" rows="2" style="width:100%;"></textarea></div>
+        <div style="margin-top:8px;"><label style="font-size:12px;font-weight:600;">Actual Result</label><textarea id="fbActual" rows="2" style="width:100%;"></textarea></div>
+        <div style="margin-top:8px;"><label style="font-size:12px;font-weight:600;">Expected Result</label><textarea id="fbExpected" rows="2" style="width:100%;"></textarea></div>
+        <div style="margin-top:8px;"><label style="font-size:12px;font-weight:600;">Suggestion for Improvement</label><textarea id="fbSuggestion" rows="2" style="width:100%;"></textarea></div>
         <button class="btn btn-success" style="margin-top:12px;" onclick="addFeedback()">💾 Save Feedback</button>
       </div>
-
-      <!-- Feedback List -->
-      <h3 style="margin:20px 0 12px;">📋 All Feedback Entries</h3>
-      <div id="feedbackList"></div>
-
-      <!-- AI-Suggested Improvements -->
-      <h3 style="margin:20px 0 12px;">💡 AI-Suggested Improvement Areas for PG</h3>
-      <div id="improvementCards" class="improvement-grid"></div>
-
-      <!-- Feedback Summary Stats -->
-      <h3 style="margin:20px 0 12px;">📊 Feedback Summary</h3>
-      <div id="feedbackStats" class="feedback-stats"></div>
-
-      <!-- Export Buttons -->
+      <h3 style="margin:20px 0 12px;">📋 All Feedback Entries</h3><div id="feedbackList"></div>
+      <h3 style="margin:20px 0 12px;">💡 AI-Suggested Improvement Areas for PG</h3><div id="improvementCards" class="improvement-grid"></div>
+      <h3 style="margin:20px 0 12px;">📊 Feedback Summary</h3><div id="feedbackStats" class="feedback-stats"></div>
       <div style="margin-top:20px;display:flex;gap:12px;flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="exportPGReport()">📥 Export PG Feedback Report</button>
         <button class="btn btn-secondary" onclick="exportCompletePackage()">📦 Export Complete Review Package</button>
       </div>
     </div>
 
-    <!-- ===== TAB 5: FEEDBACK LOG & ADO ===== -->
+    <!-- TAB 5: ADO LOG -->
     <div class="tab-panel" id="panel-adolog">
-      <!-- ADO Config -->
-      <div class="ado-config">
-        <div class="card-title" style="margin-bottom:12px;">⚙️ Azure DevOps Configuration</div>
+      <div class="ado-config"><div class="card-title" style="margin-bottom:12px;">⚙️ Azure DevOps Configuration</div>
         <div class="config-grid">
           <div><label>Organization URL</label><input type="url" id="adoOrgUrl" placeholder="https://dev.azure.com/org"></div>
           <div><label>Project</label><input type="text" id="adoProject" placeholder="Project name"></div>
-          <div><label>Area Path</label><input type="text" id="adoAreaPath" placeholder="Project\\Area\\Path"></div>
-          <div><label>Work Item Type</label>
-            <select id="adoWIT">
-              <option value="Bug">Bug</option>
-              <option value="Task">Task</option>
-              <option value="User Story">User Story</option>
-              <option value="Issue">Issue</option>
-            </select>
-          </div>
+          <div><label>Area Path</label><input type="text" id="adoAreaPath" placeholder="Project\Area\Path"></div>
+          <div><label>Work Item Type</label><select id="adoWIT"><option value="Bug">Bug</option><option value="Task">Task</option><option value="User Story">User Story</option><option value="Issue">Issue</option></select></div>
           <div><label>Assignee</label><input type="text" id="adoAssignee" placeholder="user@microsoft.com"></div>
           <div><label>Tags</label><input type="text" id="adoTags" placeholder="purview;self-help;diagnostics"></div>
         </div>
         <button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="saveAdoConfig()">💾 Save Config</button>
       </div>
-
-      <!-- ADO Summary -->
       <div id="adoSummaryCards" class="summary-cards"></div>
-
-      <!-- ADO Filters -->
       <div class="filter-bar">
-        <select id="adoStatusFilter" onchange="renderAdoLog()">
-          <option value="all">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="submitted">Submitted</option>
-        </select>
-        <select id="adoSeverityFilter" onchange="renderAdoLog()">
-          <option value="all">All Severity</option>
-          <option value="critical">Critical</option>
-          <option value="high">High</option>
-          <option value="medium">Medium</option>
-          <option value="low">Low</option>
-        </select>
-        <select id="adoAreaFilterLog" onchange="renderAdoLog()">
-          <option value="all">All Areas</option>
-          <option value="labels">Labels</option>
-          <option value="encryption">Encryption</option>
-          <option value="dlp">DLP</option>
-          <option value="ediscovery">eDiscovery</option>
-          <option value="other">Other</option>
-        </select>
+        <select id="adoStatusFilter" onchange="renderAdoLog()"><option value="all">All Status</option><option value="pending">Pending</option><option value="submitted">Submitted</option></select>
+        <select id="adoSeverityFilter" onchange="renderAdoLog()"><option value="all">All Severity</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+        <select id="adoAreaFilterLog" onchange="renderAdoLog()"><option value="all">All Areas</option><option value="labels">Labels</option><option value="encryption">Encryption</option><option value="dlp">DLP</option><option value="ediscovery">eDiscovery</option><option value="other">Other</option></select>
         <div style="margin-left:auto;display:flex;gap:8px;">
           <button class="btn btn-outline btn-sm" onclick="importFromIntake()">📥 Import from Intake</button>
           <button class="btn btn-primary btn-sm" onclick="exportAdoCSV()">📥 Export ADO CSV</button>
           <button class="btn btn-success btn-sm" onclick="submitAllPending()">🚀 Submit All Pending</button>
         </div>
       </div>
-
-      <!-- ADO Table -->
       <div class="table-wrapper" id="adoTableWrap"></div>
     </div>
+    <div class="detail-panel" id="detailPanel"><button class="close-btn" onclick="closeDetailPanel()">✕</button><div id="detailContent"></div></div>
 
-    <!-- ===== DETAIL PANEL (ADO) ===== -->
-    <div class="detail-panel" id="detailPanel">
-      <button class="close-btn" onclick="closeDetailPanel()">✕</button>
-      <div id="detailContent"></div>
-    </div>
-
-    <!-- ===== TAB 6: FEEDBACK INTAKE ===== -->
+    <!-- TAB 6: INTAKE -->
     <div class="tab-panel" id="panel-intake">
       <div class="intake-layout">
         <div>
@@ -894,40 +310,12 @@ textarea { resize: vertical; }
           <div class="card" style="margin-top:16px;">
             <div class="card-title" style="margin-bottom:12px;">📝 Metadata</div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
-              <div>
-                <label style="font-size:12px;font-weight:600;">Area</label>
-                <select id="intakeArea" style="width:100%;">
-                  <option value="">Select...</option>
-                  <option value="labels">Sensitivity Labels</option>
-                  <option value="encryption">Encryption</option>
-                  <option value="dlp">DLP</option>
-                  <option value="ediscovery">eDiscovery</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label style="font-size:12px;font-weight:600;">Entry Point</label>
-                <select id="intakeEntryPoint" style="width:100%;">
-                  <option value="">Select...</option>
-                  <option value="solutions">Solutions Page</option>
-                  <option value="help-pane">Help Pane</option>
-                  <option value="support-assistant">Support Assistant</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div>
-                <label style="font-size:12px;font-weight:600;">Diagnostic</label>
-                <select id="intakeDiagnostic" style="width:100%;"></select>
-              </div>
+              <div><label style="font-size:12px;font-weight:600;">Area</label><select id="intakeArea" style="width:100%;"><option value="">Select...</option><option value="labels">Sensitivity Labels</option><option value="encryption">Encryption</option><option value="dlp">DLP</option><option value="ediscovery">eDiscovery</option><option value="other">Other</option></select></div>
+              <div><label style="font-size:12px;font-weight:600;">Entry Point</label><select id="intakeEntryPoint" style="width:100%;"><option value="">Select...</option><option value="solutions">Solutions Page</option><option value="help-pane">Help Pane</option><option value="support-assistant">Support Assistant</option><option value="other">Other</option></select></div>
+              <div><label style="font-size:12px;font-weight:600;">Diagnostic</label><select id="intakeDiagnostic" style="width:100%;"></select></div>
             </div>
-            <div style="margin-top:12px;">
-              <label style="font-size:12px;font-weight:600;">Quick Category (auto-detect)</label>
-              <div id="intakeCategoryBtns" style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;"></div>
-            </div>
-            <div class="file-drop-zone" id="intakeDropZone" style="margin-top:12px;">
-              📎 Drop screenshots, transcripts, or logs here<br><small>or click to browse</small>
-              <input type="file" id="intakeFileInput" multiple style="display:none;">
-            </div>
+            <div style="margin-top:12px;"><label style="font-size:12px;font-weight:600;">Quick Category (auto-detect)</label><div id="intakeCategoryBtns" style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;"></div></div>
+            <div class="file-drop-zone" id="intakeDropZone" style="margin-top:12px;">📎 Drop screenshots, transcripts, or logs here<br><small>or click to browse</small><input type="file" id="intakeFileInput" multiple style="display:none;"></div>
             <div id="intakeFileList" style="margin-top:8px;"></div>
             <button class="btn btn-success" style="margin-top:12px;" onclick="captureIntakeEntry()">✅ Capture Feedback Entry</button>
           </div>
@@ -937,17 +325,14 @@ textarea { resize: vertical; }
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
               <div class="card-title">📬 Captured Entries</div>
               <div style="display:flex;gap:4px;">
-                <button class="btn btn-outline btn-sm intake-filter-btn active" data-filter="all" onclick="filterIntakeEntries('all',this)">All</button>
-                <button class="btn btn-outline btn-sm intake-filter-btn" data-filter="new" onclick="filterIntakeEntries('new',this)">New</button>
-                <button class="btn btn-outline btn-sm intake-filter-btn" data-filter="analyzed" onclick="filterIntakeEntries('analyzed',this)">Analyzed</button>
+                <button class="btn btn-outline btn-sm intake-filter-btn active" onclick="filterIntakeEntries('all',this)">All</button>
+                <button class="btn btn-outline btn-sm intake-filter-btn" onclick="filterIntakeEntries('new',this)">New</button>
+                <button class="btn btn-outline btn-sm intake-filter-btn" onclick="filterIntakeEntries('analyzed',this)">Analyzed</button>
               </div>
             </div>
             <div id="intakeEntriesFeed" class="intake-entries"></div>
           </div>
-          <div class="card" id="intakePreviewPanel" style="display:none;margin-top:16px;">
-            <div class="card-title" style="margin-bottom:12px;">Entry Preview</div>
-            <div id="intakePreviewContent"></div>
-          </div>
+          <div class="card" id="intakePreviewPanel" style="display:none;margin-top:16px;"><div class="card-title" style="margin-bottom:12px;">Entry Preview</div><div id="intakePreviewContent"></div></div>
           <div style="margin-top:12px;display:flex;gap:8px;">
             <button class="btn btn-primary btn-sm" onclick="exportForCopilotAnalysis()">🤖 Export for Copilot Analysis</button>
             <button class="btn btn-secondary btn-sm" onclick="saveAllIntakeData()">💾 Save All Data</button>
@@ -956,24 +341,25 @@ textarea { resize: vertical; }
       </div>
     </div>
 
-  </div><!-- end tab-content -->
-</div><!-- end main-content -->
+  </div>
+</div>
 
 <script>
-/* ===== DATA ARRAYS ===== */
+/* ===== DATA: SOLUTIONS DIAGNOSTICS ===== */
 const solutionsDiagnostics = [
   { id:'s1', area:'encryption', name:'Email encryption issues \u2014 licenses/settings', checks:'Checks license availability, IRM config, transport rules, encryption settings', cmdlet:'Test-IrmConfiguration', page:'Information Protection' },
-  { id:'s2', area:'labels', name:'User can\'t find sensitivity label \u2014 policy check', checks:'Checks which labels available to user, label names, settings, availability', cmdlet:'Get-Label / Get-LabelPolicy', page:'Information Protection' },
+  { id:'s2', area:'labels', name:"User can't find sensitivity label \u2014 policy check", checks:'Checks which labels available to user, label names, settings, availability', cmdlet:'Get-Label / Get-LabelPolicy', page:'Information Protection' },
   { id:'s3', area:'labels', name:'Autolabeling not applied to SPO/ODB file', checks:'Checks file properties, classification, whether autolabeling conditions met', cmdlet:'Test-DlpPolicies', page:'Information Protection' },
   { id:'s4', area:'dlp', name:'DLP rule not enforced for user \u2014 policy scope', checks:'Checks which DLP policies apply to user, policy names, where applied', cmdlet:'Get-DlpCompliancePolicy / Rule', page:'DLP' },
   { id:'s5', area:'dlp', name:'Endpoint DLP policy sync issues', checks:'Checks for policy sync issues, provides recommendations', cmdlet:'Get-DlpCompliancePolicy', page:'DLP' },
   { id:'s6', area:'dlp', name:'DLP alerts not working \u2014 rule configuration', checks:'Checks alerts, determines issues with DLP rule configuration', cmdlet:'Get-DlpCompliancePolicy / Rule', page:'DLP' },
-  { id:'s7', area:'dlp', name:'Can\'t find alert for activity / audit event', checks:'Checks for alert related to activity/audit, investigates missing alert', cmdlet:'Get-DlpCompliancePolicy / Rule', page:'DLP' },
+  { id:'s7', area:'dlp', name:"Can't find alert for activity / audit event", checks:'Checks for alert related to activity/audit, investigates missing alert', cmdlet:'Get-DlpCompliancePolicy / Rule', page:'DLP' },
   { id:'s8', area:'dlp', name:'DLP rule not triggering for SPO/ODB file', checks:'Checks file properties, classification, DLP rule match', cmdlet:'Test-DlpPolicies', page:'DLP' },
   { id:'s9', area:'dlp', name:'Policy tips not appearing in OWA (HAR analysis)', checks:'Analyzes HAR file to investigate missing policy tips in Outlook on web', cmdlet:'Test-DlpPolicies', page:'DLP' },
   { id:'s10', area:'dlp', name:'DLP rule applied/not applied to Exchange email', checks:'Reviews message trace CSV for DLP rules applied to email', cmdlet:'Get-DlpCompliancePolicy + multiple', page:'DLP' },
 ];
 
+/* ===== DATA: HELP DIAGNOSTICS ===== */
 const helpDiagnostics = [
   { id:'h1', area:'other', name:'Archive mailbox', checks:'Checks issues related to archive mailboxes', role:'Any admin', link:'https://aka.ms/PillarArchiveMailbox' },
   { id:'h2', area:'other', name:'Retention policy for user mailbox', checks:'Checks retention policy settings for a user mailbox', role:'Any admin', link:'https://aka.ms/PillarRetentionPolicy' },
@@ -990,16 +376,17 @@ const helpDiagnostics = [
 
 const allDiagnostics = [...solutionsDiagnostics.map(d=>({...d,source:'solutions'})), ...helpDiagnostics.map(d=>({...d,source:'help'}))];
 
+/* ===== DATA: GAP DATA ===== */
 const gapData = [
-  { area:'labels', issue:'Labels not appearing for users / policy sync delays', severity:'high', source:'Tech Community, Reddit', coverage:'covered', diagnostic:'User can\'t find sensitivity label', note:'Direct match \u2014 test if sync delay is surfaced' },
+  { area:'labels', issue:'Labels not appearing for users / policy sync delays', severity:'high', source:'Tech Community, Reddit', coverage:'covered', diagnostic:"User can't find sensitivity label", note:'Direct match \u2014 test if sync delay is surfaced' },
   { area:'labels', issue:'Auto-labeling cannot overwrite user-applied labels', severity:'high', source:'Practical365 (MVP)', coverage:'partial', diagnostic:'Autolabeling not applied to file', note:'Diagnostic checks evaluation but may not explain override limitation' },
-  { area:'labels', issue:'External recipients can\'t open labeled/encrypted files', severity:'high', source:'Tech Community (2,200 views)', coverage:'gap', diagnostic:'None \u2014 no cross-tenant B2B validation', note:'Suggested: "Validate cross-tenant access for label encryption"' },
+  { area:'labels', issue:"External recipients can't open labeled/encrypted files", severity:'high', source:'Tech Community (2,200 views)', coverage:'gap', diagnostic:'None \u2014 no cross-tenant B2B validation', note:'Suggested: "Validate cross-tenant access for label encryption"' },
   { area:'labels', issue:'Labels break OneDrive external sharing without encryption', severity:'medium', source:'Tech Community (446 views)', coverage:'gap', diagnostic:'None', note:'Sharing + label interaction not covered' },
   { area:'labels', issue:'MIP SDK breaking changes \u2014 "Could not find template"', severity:'medium', source:'Stack Overflow', coverage:'gap', diagnostic:'None \u2014 SDK/developer scenarios not covered', note:'Developer audience not targeted by current diagnostics' },
   { area:'labels', issue:'Mandatory labeling blocks automation (Excel Interop, VBA)', severity:'medium', source:'Stack Overflow (606 views)', coverage:'gap', diagnostic:'None', note:'Automation/programmatic scenarios not covered' },
   { area:'labels', issue:'Dynamic watermarking breaks access for older Office', severity:'medium', source:'Practical365', coverage:'gap', diagnostic:'None', note:'Client version compatibility not checked' },
   { area:'labels', issue:'Graph API returns 400 retrieving labels', severity:'medium', source:'Stack Overflow (761 views)', coverage:'gap', diagnostic:'None \u2014 API scenarios not covered', note:'Developer/API troubleshooting gap' },
-  { area:'encryption', issue:'External users can\'t open encrypted attachments (CA + RMS conflict)', severity:'critical', source:'Tech Community Blog', coverage:'partial', diagnostic:'Email encryption diagnostic', note:'Checks IRM but NOT Conditional Access policies \u2014 biggest gap' },
+  { area:'encryption', issue:"External users can't open encrypted attachments (CA + RMS conflict)", severity:'critical', source:'Tech Community Blog', coverage:'partial', diagnostic:'Email encryption diagnostic', note:'Checks IRM but NOT Conditional Access policies \u2014 biggest gap' },
   { area:'encryption', issue:'Encrypt-Only unreadable after Outlook 2511 update (confirmed bug)', severity:'critical', source:'Microsoft Support', coverage:'gap', diagnostic:'None \u2014 known bug, no diagnostic', note:'Diagnostic could flag known active bugs' },
   { area:'encryption', issue:'"Encrypt-Only" silently applies "Do Not Forward"', severity:'high', source:'Tech Community (832 views)', coverage:'gap', diagnostic:'None \u2014 template mismatch not detected', note:'Suggested: "Verify encryption template matches intended config"' },
   { area:'encryption', issue:'Encryption disappears on forwarded emails', severity:'high', source:'Tech Community', coverage:'gap', diagnostic:'None \u2014 label inheritance not checked', note:'Suggested: "Check encryption persistence across email thread"' },
@@ -1008,7 +395,7 @@ const gapData = [
   { area:'encryption', issue:'OME format change (message_v2.rpmsg) breaking non-M365', severity:'high', source:'Tech Community (1,200 views)', coverage:'gap', diagnostic:'None \u2014 format compatibility not checked', note:'Could detect recipient compatibility issues' },
   { area:'encryption', issue:'Domain-specific label permissions cross-tenant auth failure', severity:'medium', source:'Tech Community', coverage:'gap', diagnostic:'None', note:'Cross-tenant scope permissions not validated' },
   { area:'dlp', issue:'DLP alerts silently disabled after Sept 2025 change', severity:'critical', source:'m365admin.handsontek.net', coverage:'partial', diagnostic:'DLP alerts not working', note:'Checks config but may not detect PS vs portal sync issue' },
-  { area:'dlp', issue:'Endpoint DLP doesn\'t work scoped to user groups', severity:'critical', source:'Tech Community', coverage:'partial', diagnostic:'Endpoint DLP policy sync', note:'Checks sync but not scoping limitation' },
+  { area:'dlp', issue:"Endpoint DLP doesn't work scoped to user groups", severity:'critical', source:'Tech Community', coverage:'partial', diagnostic:'Endpoint DLP policy sync', note:'Checks sync but not scoping limitation' },
   { area:'dlp', issue:'Files from network shares bypass Endpoint DLP', severity:'critical', source:'Tech Community', coverage:'gap', diagnostic:'None \u2014 known limitation not surfaced', note:'Suggested: "Check Network Share Coverage for Endpoint DLP"' },
   { area:'dlp', issue:'Policy tips not showing (9 root causes; Mac unsupported)', severity:'high', source:'Microsoft Docs, blogs', coverage:'covered', diagnostic:'Policy tips diagnostic + HAR analysis', note:'Well covered but Mac limitation not proactively flagged' },
   { area:'dlp', issue:'Policy sync/propagation delays (2-24 hours)', severity:'high', source:'Spiceworks, Tech Community', coverage:'covered', diagnostic:'Endpoint DLP policy sync', note:'Direct match \u2014 test if timeline/status detail shown' },
@@ -1017,233 +404,161 @@ const gapData = [
   { area:'dlp', issue:'False positive reporting invisible to admins', severity:'medium', source:'Tech Community', coverage:'gap', diagnostic:'None \u2014 no admin dashboard', note:'Suggested: "Show false positive reports submitted by users"' },
 ];
 
+/* ===== DATA: SCENARIOS ===== */
 const scenarios = [
-  {
-    id:'sc1', area:'labels', priority:'high',
-    title:'Label Not Visible to User \u2014 Remove User from Label Policy',
+  { id:'sc1', area:'labels', priority:'high', title:'Label Not Visible to User \u2014 Remove User from Label Policy',
     breakSteps:['Go to Purview portal \u2192 Information Protection \u2192 Label Policies','Edit an existing label policy and remove a specific test user from the scope','Wait 15-30 minutes for policy to propagate','Log in as that test user in Outlook/Word and check if label appears'],
-    diagnostic:'User can\'t find sensitivity label (Solutions page)',
+    diagnostic:"User can't find sensitivity label (Solutions page)",
     diagnosticSteps:['Go to Information Protection \u2192 Diagnostics','Select "A user can\'t find the sensitivity label they need"','Enter the affected user\'s email address','Run the diagnostic'],
     expectedResult:'Diagnostic should detect that user is NOT in the label policy scope and recommend re-adding them.',
     gradeQuestions:['Does it identify the missing policy assignment?','Does it name which policy to fix?','Is the language clear for a non-technical admin?','Does it link to documentation for next steps?'],
-    customerIssue:'Labels not appearing for users / policy sync delays (#1 Sensitivity Labels issue)'
-  },
-  {
-    id:'sc2', area:'labels', priority:'high',
-    title:'Auto-Label Mismatch \u2014 File Doesn\'t Meet Conditions',
+    customerIssue:'Labels not appearing for users / policy sync delays (#1 Sensitivity Labels issue)' },
+  { id:'sc2', area:'labels', priority:'high', title:"Auto-Label Mismatch \u2014 File Doesn't Meet Conditions",
     breakSteps:['Create a sensitivity label with auto-labeling conditions (e.g., "Credit Card Number" SIT)','Upload a file to SharePoint/OneDrive that does NOT contain credit card numbers','Wait for auto-labeling evaluation','Verify the label was NOT applied'],
     diagnostic:'Autolabeling not applied to SPO/ODB file (Solutions page)',
     diagnosticSteps:['Go to Information Protection \u2192 Diagnostics','Select "Autolabeling isn\'t applied to a file"','Enter the full file path (not sharing link)','Run the diagnostic'],
-    expectedResult:'Diagnostic should explain that the file was evaluated but didn\'t meet auto-labeling conditions, and show which conditions were checked.',
+    expectedResult:"Diagnostic should explain that the file was evaluated but didn't meet auto-labeling conditions, and show which conditions were checked.",
     gradeQuestions:['Does it explain WHY the label was not applied?','Does it show which SIT conditions were evaluated?','Does it tell the user what content to add to trigger labeling?','Is the file path input guidance clear enough?'],
-    customerIssue:'Auto-labeling cannot overwrite user-applied labels (#2 Sensitivity Labels issue)'
-  },
-  {
-    id:'sc3', area:'labels', priority:'high',
-    title:'Sensitivity Label with Encryption \u2014 External Access Blocked',
+    customerIssue:'Auto-labeling cannot overwrite user-applied labels (#2 Sensitivity Labels issue)' },
+  { id:'sc3', area:'labels', priority:'high', title:'Sensitivity Label with Encryption \u2014 External Access Blocked',
     breakSteps:['Create a sensitivity label that applies encryption with "All users in organization" permission','Apply this label to a document in OneDrive','Share the document with an external user (outside tenant)','Have the external user attempt to open the file'],
     diagnostic:'Email encryption diagnostic (Solutions page) + Sensitivity label config (Help pane)',
     diagnosticSteps:['Run both the email encryption diagnostic and sensitivity label diagnostic','Check if either diagnostic flags the external access issue','Note what each diagnostic recommends'],
     expectedResult:'Current gap: Neither diagnostic validates cross-tenant B2B access. Document what each reports.',
     gradeQuestions:['Does any diagnostic detect the external access problem?','Does it suggest checking B2B/guest access settings?','Does it mention Azure AD cross-tenant access policies?','Would a customer know what to fix from the output?'],
-    customerIssue:'External recipients can\'t open labeled/encrypted files (#3 Sensitivity Labels \u2014 2,200 views)'
-  },
-  {
-    id:'sc4', area:'encryption', priority:'critical',
-    title:'IRM Configuration Broken \u2014 Disable Azure RMS',
+    customerIssue:"External recipients can't open labeled/encrypted files (#3 Sensitivity Labels \u2014 2,200 views)" },
+  { id:'sc4', area:'encryption', priority:'critical', title:'IRM Configuration Broken \u2014 Disable Azure RMS',
     breakSteps:['In Exchange Online PowerShell, run: Set-IRMConfiguration -AzureRMSLicensingEnabled $false','Wait a few minutes for the change to take effect','Send an encrypted email from a test user','Verify encryption fails or behaves unexpectedly'],
     diagnostic:'Email encryption \u2014 licenses/settings (Solutions page)',
     diagnosticSteps:['Go to Information Protection \u2192 Diagnostics','Select "Email encryption isn\'t working as expected"','Run the diagnostic'],
     expectedResult:'Diagnostic should detect that IRM/Azure RMS is disabled and recommend re-enabling it.',
     gradeQuestions:['Does it detect IRM is disabled?','Does it provide the exact PowerShell command to fix?','Does it check license availability too?','Is the error description clear for IT admins?'],
-    customerIssue:'External users can\'t open encrypted attachments (#1 Email Encryption \u2014 Critical)',
-    cleanup:'Run: Set-IRMConfiguration -AzureRMSLicensingEnabled $true'
-  },
-  {
-    id:'sc5', area:'encryption', priority:'critical',
-    title:'OME Template Mismatch \u2014 Encrypt-Only vs Do Not Forward',
+    customerIssue:"External users can't open encrypted attachments (#1 Email Encryption \u2014 Critical)",
+    cleanup:'Run: Set-IRMConfiguration -AzureRMSLicensingEnabled $true' },
+  { id:'sc5', area:'encryption', priority:'critical', title:'OME Template Mismatch \u2014 Encrypt-Only vs Do Not Forward',
     breakSteps:['Create a mail flow rule that applies "Encrypt" template','Send a test email that triggers this rule','Check what the recipient sees \u2014 is it Encrypt-Only or Do Not Forward?','Verify by checking message headers for the applied RMS template ID'],
     diagnostic:'Email encryption diagnostic + Message Encryption config (Help pane)',
     diagnosticSteps:['Run the email encryption diagnostic from Solutions page','Also run the Message Encryption diagnostic from Help pane (https://aka.ms/PillarOMEDiag)','Compare what each reports about template configuration'],
-    expectedResult:'Current gap: Diagnostics likely won\'t detect template mismatch. Document the diagnostic output.',
+    expectedResult:"Current gap: Diagnostics likely won't detect template mismatch. Document the diagnostic output.",
     gradeQuestions:['Does the diagnostic show which template was actually applied?','Does it compare intended vs actual template?','Can it detect the Encrypt-Only \u2192 DNF silent switch?','Does it suggest checking mail flow rules?'],
-    customerIssue:'"Encrypt-Only" silently applies "Do Not Forward" (#3 Email Encryption \u2014 832 views)'
-  },
-  {
-    id:'sc6', area:'encryption', priority:'high',
-    title:'Message Encryption Config Validation \u2014 Tenant-Level Check',
+    customerIssue:'"Encrypt-Only" silently applies "Do Not Forward" (#3 Email Encryption \u2014 832 views)' },
+  { id:'sc6', area:'encryption', priority:'high', title:'Message Encryption Config Validation \u2014 Tenant-Level Check',
     breakSteps:['This is a non-destructive test \u2014 simply run the diagnostic against current tenant config','Document the current encryption state before testing','Optionally: temporarily change a transport rule to use an incorrect RMS template'],
     diagnostic:'Microsoft Purview Message Encryption configuration (Help pane)',
     diagnosticSteps:['Go to M365 Admin Center \u2192 Help pane','Search for "message encryption"','Run the Message Encryption diagnostic (https://aka.ms/PillarOMEDiag)','Document all checks performed and results shown'],
     expectedResult:'Diagnostic should validate complete OME configuration and flag any misconfigurations.',
     gradeQuestions:['What specific checks does it perform?','Does it check transport rules?','Does it validate certificate/template config?','Are results actionable for an admin?'],
-    customerIssue:'General encryption configuration issues \u2014 baseline test'
-  },
-  {
-    id:'sc7', area:'dlp', priority:'critical',
-    title:'DLP Policy Not Enforcing \u2014 Remove User from Policy Scope',
+    customerIssue:'General encryption configuration issues \u2014 baseline test' },
+  { id:'sc7', area:'dlp', priority:'critical', title:'DLP Policy Not Enforcing \u2014 Remove User from Policy Scope',
     breakSteps:['Go to Purview portal \u2192 Data Loss Prevention \u2192 Policies','Edit a DLP policy and exclude a specific test user or group','Save the policy and wait for propagation (can take up to 1 hour)','As that user, share a file with sensitive content that should trigger DLP','Verify the DLP rule does NOT trigger for this user'],
     diagnostic:'DLP rule not enforced for user (Solutions page)',
     diagnosticSteps:['Go to DLP \u2192 Diagnostics','Select "A DLP rule isn\'t enforced for a particular user"','Enter the affected user\'s email and the DLP policy name','Run the diagnostic'],
     expectedResult:'Diagnostic should detect that user is excluded from the DLP policy scope.',
-    gradeQuestions:['Does it identify the user exclusion?','Does it show which policy/rule applies or doesn\'t?','Does it recommend how to add the user back?','Is the output understandable without DLP expertise?'],
+    gradeQuestions:['Does it identify the user exclusion?',"Does it show which policy/rule applies or doesn't?",'Does it recommend how to add the user back?','Is the output understandable without DLP expertise?'],
     customerIssue:'DLP rule not enforcing (#4 DLP issue \u2014 covered by diagnostics)',
-    cleanup:'Re-add the user to the DLP policy scope'
-  },
-  {
-    id:'sc8', area:'dlp', priority:'critical',
-    title:'DLP Alerts Disabled \u2014 Modify Alert Configuration',
+    cleanup:'Re-add the user to the DLP policy scope' },
+  { id:'sc8', area:'dlp', priority:'critical', title:'DLP Alerts Disabled \u2014 Modify Alert Configuration',
     breakSteps:['Open Exchange Online PowerShell','Run: Get-DlpComplianceRule | select Name, GenerateAlert \u2014 note current settings','Edit a DLP compliance rule to disable alerts: Set-DlpComplianceRule -Identity "RuleName" -GenerateAlert $null','Trigger the DLP rule with sensitive content','Verify no alert is generated in the Alerts dashboard'],
     diagnostic:'DLP alerts not working (Solutions page)',
     diagnosticSteps:['Go to DLP \u2192 Diagnostics','Select "Alerts aren\'t working for a DLP rule"','Enter the rule/policy name','Run the diagnostic'],
     expectedResult:'Diagnostic should detect that GenerateAlert is disabled/null for the rule.',
     gradeQuestions:['Does it detect the missing alert config?','Does it show the PS vs Portal sync difference?','Does it reference the Sept 2025 change (MC1143996)?','Does it provide the exact PS command to re-enable?'],
     customerIssue:'DLP alerts silently disabled after Sept 2025 change (#1 DLP \u2014 Critical)',
-    cleanup:'Re-enable: Set-DlpComplianceRule -Identity "RuleName" -GenerateAlert SiteAdmin'
-  },
-  {
-    id:'sc9', area:'dlp', priority:'high',
-    title:'DLP Rule Not Triggering for SPO File \u2014 Wrong File Path',
+    cleanup:'Re-enable: Set-DlpComplianceRule -Identity "RuleName" -GenerateAlert SiteAdmin' },
+  { id:'sc9', area:'dlp', priority:'high', title:'DLP Rule Not Triggering for SPO File \u2014 Wrong File Path',
     breakSteps:['Upload a file containing sensitive data (e.g., SSN pattern) to SharePoint','Note the full file path vs the sharing link','Wait for DLP to scan the file'],
     diagnostic:'DLP rule not triggering for SPO/ODB file (Solutions page)',
     diagnosticSteps:['Go to DLP \u2192 Diagnostics','Select "A DLP rule isn\'t triggering for a file"','First try entering the SHARING LINK (this should fail/give wrong result)','Then enter the FULL FILE PATH','Compare results'],
     expectedResult:'Diagnostic should work with full path and show rule match/no-match. Sharing link should either be rejected or show clear error.',
-    gradeQuestions:['Does it clearly explain the path vs link difference?','What happens when you enter a sharing link?','Does it show which DLP rules were evaluated?','Does it explain why a rule matched or didn\'t?'],
-    customerIssue:'File path guidance confusion \u2014 UX improvement opportunity'
-  },
-  {
-    id:'sc10', area:'dlp', priority:'high',
-    title:'Endpoint DLP Policy Sync Failure \u2014 Device Check',
+    gradeQuestions:['Does it clearly explain the path vs link difference?','What happens when you enter a sharing link?','Does it show which DLP rules were evaluated?',"Does it explain why a rule matched or didn't?"],
+    customerIssue:'File path guidance confusion \u2014 UX improvement opportunity' },
+  { id:'sc10', area:'dlp', priority:'high', title:'Endpoint DLP Policy Sync Failure \u2014 Device Check',
     breakSteps:['Create or modify an Endpoint DLP policy','Check a test device to see if the policy has synced','If possible, disconnect the device from the network briefly then reconnect','Verify policy sync status'],
     diagnostic:'Endpoint DLP policy sync (Solutions page)',
     diagnosticSteps:['Go to DLP \u2192 Diagnostics','Select "Endpoint DLP isn\'t working \u2014 policy sync issues?"','Enter the device or user information','Run the diagnostic'],
     expectedResult:'Diagnostic should detect sync delay and provide timeline/recommendations.',
     gradeQuestions:['Does it show last sync timestamp?','Does it provide sync status per policy?','Does it suggest specific remediation steps?','Does it account for network connectivity issues?'],
-    customerIssue:'Policy sync/propagation delays (2-24 hours) (#5 DLP issue)'
-  },
-  {
-    id:'sc11', area:'dlp', priority:'high',
-    title:'Policy Tips Missing in OWA \u2014 HAR File Analysis',
+    customerIssue:'Policy sync/propagation delays (2-24 hours) (#5 DLP issue)' },
+  { id:'sc11', area:'dlp', priority:'high', title:'Policy Tips Missing in OWA \u2014 HAR File Analysis',
     breakSteps:['Create a DLP policy with policy tips enabled for Exchange/OWA','Log into Outlook on the web','Compose an email with content that should trigger the DLP policy tip','Open F12 Developer Tools \u2192 Network tab \u2192 Preserve log','Send the email and export the HAR file'],
     diagnostic:'Policy tips in OWA \u2014 HAR analysis (Solutions page)',
     diagnosticSteps:['Go to DLP \u2192 Diagnostics','Select "Policy tips don\'t appear in Outlook on the web"','Upload the HAR file','Run the diagnostic'],
-    expectedResult:'Diagnostic should analyze HAR file and identify why policy tips aren\'t showing.',
+    expectedResult:"Diagnostic should analyze HAR file and identify why policy tips aren't showing.",
     gradeQuestions:['Are the HAR file capture instructions clear enough?','Does it explain what it found in the HAR file?','Does it cover common root causes (9 known)?','Does it mention Mac is unsupported?'],
-    customerIssue:'Policy tips not showing \u2014 9 documented root causes (#4 DLP issue)'
-  },
-  {
-    id:'sc12', area:'dlp', priority:'critical',
-    title:'Network Share Bypass \u2014 Endpoint DLP Limitation Test',
+    customerIssue:'Policy tips not showing \u2014 9 documented root causes (#4 DLP issue)' },
+  { id:'sc12', area:'dlp', priority:'critical', title:'Network Share Bypass \u2014 Endpoint DLP Limitation Test',
     breakSteps:['Enable Endpoint DLP on a test device','Create a DLP policy scoped to Endpoint devices','Copy a file with sensitive content FROM a network share/mapped drive','Verify whether Endpoint DLP blocks or allows the action'],
     diagnostic:'Endpoint DLP diagnostic (Solutions page)',
     diagnosticSteps:['Run the Endpoint DLP diagnostic','Note if it mentions network share coverage','Check if it flags the known limitation'],
-    expectedResult:'Current gap: Diagnostic likely won\'t mention network share bypass limitation. Document what it reports.',
+    expectedResult:"Current gap: Diagnostic likely won't mention network share bypass limitation. Document what it reports.",
     gradeQuestions:['Does the diagnostic mention network share/mapped drive scope?','Does it proactively warn about known limitations?','Would a customer discover this limitation from the diagnostic?','Should there be a separate "Check Endpoint DLP coverage" diagnostic?'],
-    customerIssue:'Files from network shares bypass Endpoint DLP (#3 DLP \u2014 Critical)'
-  },
-  {
-    id:'sc13', area:'labels', priority:'high',
-    title:'Sensitivity Label Config Check \u2014 Help Pane Diagnostic',
+    customerIssue:'Files from network shares bypass Endpoint DLP (#3 DLP \u2014 Critical)' },
+  { id:'sc13', area:'labels', priority:'high', title:'Sensitivity Label Config Check \u2014 Help Pane Diagnostic',
     breakSteps:['Misconfigure a sensitivity label (e.g., set conflicting scope, disable for a workload)','Publish the label via policy'],
     diagnostic:'Sensitivity label configuration (Help pane \u2014 https://aka.ms/PillarMipLabelDiag)',
     diagnosticSteps:['Go to M365 Admin Center \u2192 Help icon','Search for "sensitivity label"','Run the Sensitivity Label Configuration diagnostic','Enter the label name when prompted'],
     expectedResult:'Diagnostic should detect misconfiguration and recommend fixes.',
     gradeQuestions:['Does it detect the intentional misconfiguration?','Does it check all workloads (Outlook, SPO, Teams)?','How does it compare to the Solutions page diagnostic?','Is the Help pane UX intuitive to find?'],
-    customerIssue:'General label configuration troubleshooting'
-  },
-  {
-    id:'sc14', area:'dlp', priority:'high',
-    title:'DLP Policy Config \u2014 Help Pane vs Solutions Page Comparison',
+    customerIssue:'General label configuration troubleshooting' },
+  { id:'sc14', area:'dlp', priority:'high', title:'DLP Policy Config \u2014 Help Pane vs Solutions Page Comparison',
     breakSteps:['Create a DLP policy with an intentional configuration issue (e.g., no locations selected)','Save the policy'],
     diagnostic:'DLP policy & rule configuration (Help pane \u2014 https://aka.ms/PillarDLPPolicyConfig)',
     diagnosticSteps:['First run the Help pane diagnostic (Admin Center \u2192 Help \u2192 search "DLP")','Then run the equivalent Solutions page diagnostic','Compare the outputs, coverage, and recommendations of both'],
     expectedResult:'Compare: Which diagnostic is more thorough? Do they give different results? Is there redundancy or complementary coverage?',
     gradeQuestions:['Which diagnostic provides better detail?','Do they check the same things or different?','Would a customer know which one to use?','Does the Help pane version require Global Admin (vs Solutions page)?'],
-    customerIssue:'Comparing Help pane vs Solutions page diagnostic coverage'
-  },
-  {
-    id:'sc15', area:'dlp', priority:'medium',
-    title:'DLP Exchange Email \u2014 Message Trace Analysis',
+    customerIssue:'Comparing Help pane vs Solutions page diagnostic coverage' },
+  { id:'sc15', area:'dlp', priority:'medium', title:'DLP Exchange Email \u2014 Message Trace Analysis',
     breakSteps:['Send an email containing sensitive content (e.g., credit card numbers) between test users','Go to Exchange Admin Center \u2192 Mail flow \u2192 Message trace','Run a message trace for the sent email','Export the results as CSV'],
     diagnostic:'DLP rule applied/not applied to Exchange email (Solutions page)',
     diagnosticSteps:['Go to DLP \u2192 Diagnostics','Select "A DLP rule didn\'t apply or was applied unexpectedly to an email"','Upload the message trace CSV','Run the diagnostic'],
     expectedResult:'Diagnostic should analyze the trace and show which DLP rules were evaluated and their results.',
     gradeQuestions:['Are the message trace export instructions clear?','Does it parse the CSV correctly?','Does it show per-rule match results?','Does it explain both matched and unmatched rules?'],
-    customerIssue:'DLP rule application issues for Exchange email'
-  }
+    customerIssue:'DLP rule application issues for Exchange email' }
 ];
 
-/* ===== PRE-LOADED FEEDBACK FINDINGS ===== */
+/* ===== DATA: PRE-LOADED FINDINGS ===== */
 const preloadedFindings = [
-  {
-    id: 'pf1',
-    category: 'accuracy',
-    severity: 5,
-    title: 'Agent returns completely irrelevant answer \u2014 "Change a name and email" for a DLP question',
-    transcript: [
-      { role: 'user', text: 'I need help with DLP policy not enforcing for a specific user.' },
-      { role: 'agent', text: 'I can help you change a name and email address. Would you like to update your display name or email alias?' },
-      { role: 'user', text: 'No, this is about DLP. Data Loss Prevention policies.' },
-      { role: 'agent', text: 'I understand. Let me help you update your account information. Please provide your current email address.' }
+  { id:'pf1', category:'accuracy', severity:5,
+    title:'Agent returns completely irrelevant answer \u2014 "Change a name and email" for a DLP question',
+    transcript:[
+      {role:'user',text:'I need help with DLP policy not enforcing for a specific user.'},
+      {role:'agent',text:'I can help you change a name and email address. Would you like to update your display name or email alias?'},
+      {role:'user',text:'No, this is about DLP. Data Loss Prevention policies.'},
+      {role:'agent',text:'I understand. Let me help you update your account information. Please provide your current email address.'}
     ],
-    failures: [
-      'Wrong topic: Responded about account management instead of DLP',
-      'No follow-up: Did not ask clarifying questions about the DLP issue',
-      'No escalation: Did not offer to route to compliance support',
-      'Generic response: Used a canned response unrelated to the query',
-      'Missed context: Ignored "DLP" and "policy" keywords entirely'
+    failures:['Wrong topic: Responded about account management instead of DLP','No follow-up: Did not ask clarifying questions about the DLP issue','No escalation: Did not offer to route to compliance support','Generic response: Used a canned response unrelated to the query','Missed context: Ignored "DLP" and "policy" keywords entirely'],
+    expectedFlow:'Agent should: 1) Recognize DLP keywords, 2) Ask which policy/user, 3) Run DLP diagnostic, 4) Show policy scope results',
+    diagnostic:'DLP rule not enforced for user' },
+  { id:'pf2', category:'relevance', severity:5,
+    title:'Support Assistant asks generic open-ended question instead of structured options',
+    transcript:[
+      {role:'user',text:'I have an issue with Purview.'},
+      {role:'agent',text:"I'd be happy to help! Can you tell me more about what's going on?"}
     ],
-    expectedFlow: 'Agent should: 1) Recognize DLP keywords, 2) Ask which policy/user, 3) Run DLP diagnostic, 4) Show policy scope results',
-    diagnostic: 'DLP rule not enforced for user'
-  },
-  {
-    id: 'pf2',
-    category: 'relevance',
-    severity: 5,
-    title: 'Support Assistant asks generic open-ended question instead of structured options',
-    transcript: [
-      { role: 'user', text: 'I have an issue with Purview.' },
-      { role: 'agent', text: 'I\'d be happy to help! Can you tell me more about what\'s going on?' }
+    failures:['No structured options presented','Open-ended question leads to long back-and-forth','No category selection offered','Missed opportunity for quick routing'],
+    expectedFlow:'Agent should present: "Which area are you experiencing issues with? 1) DLP Policies 2) Sensitivity Labels 3) Email Encryption 4) eDiscovery"',
+    diagnostic:'N/A - Entry point UX' },
+  { id:'pf3', category:'ux', severity:4,
+    title:'Agent gives up after wrong answer \u2014 no error recovery or retry',
+    transcript:[
+      {role:'user',text:'DLP alerts are not working for my policy.'},
+      {role:'agent',text:'Please check your DLP policy configuration in the Purview portal.'},
+      {role:'user',text:'I already did that. The configuration looks correct.'},
+      {role:'agent',text:"I'm sorry, I'm unable to help further with this issue. Please contact Microsoft Support."}
     ],
-    failures: [
-      'No structured options presented',
-      'Open-ended question leads to long back-and-forth',
-      'No category selection offered',
-      'Missed opportunity for quick routing'
-    ],
-    expectedFlow: 'Agent should present: "Which area are you experiencing issues with? 1) DLP Policies 2) Sensitivity Labels 3) Email Encryption 4) eDiscovery"',
-    diagnostic: 'N/A - Entry point UX'
-  },
-  {
-    id: 'pf3',
-    category: 'ux',
-    severity: 4,
-    title: 'Agent gives up after wrong answer \u2014 no error recovery or retry',
-    transcript: [
-      { role: 'user', text: 'DLP alerts are not working for my policy.' },
-      { role: 'agent', text: 'Please check your DLP policy configuration in the Purview portal.' },
-      { role: 'user', text: 'I already did that. The configuration looks correct.' },
-      { role: 'agent', text: 'I\'m sorry, I\'m unable to help further with this issue. Please contact Microsoft Support.' }
-    ],
-    failures: [
-      'No retry or alternative approach offered',
-      'No "Was this helpful?" feedback mechanism',
-      'Gave up after only one suggestion',
-      'No escalation path with context preservation'
-    ],
-    expectedFlow: 'Agent should: 1) Acknowledge the check, 2) Ask about alert configuration specifics, 3) Suggest running the DLP alerts diagnostic, 4) Offer confidence-based "Was this helpful?" prompt',
-    diagnostic: 'DLP alerts not working'
-  }
+    failures:['No retry or alternative approach offered','No "Was this helpful?" feedback mechanism','Gave up after only one suggestion','No escalation path with context preservation'],
+    expectedFlow:'Agent should: 1) Acknowledge the check, 2) Ask about alert configuration specifics, 3) Suggest running the DLP alerts diagnostic, 4) Offer confidence-based "Was this helpful?" prompt',
+    diagnostic:'DLP alerts not working' }
 ];
 
-/* ===== AI-SUGGESTED IMPROVEMENTS ===== */
+/* ===== DATA: IMPROVEMENT AREAS ===== */
 const improvementAreas = [
-  { icon: '\uD83C\uDFAF', title: 'Structured Entry Point', desc: 'Replace open-ended "How can I help?" with categorized options: DLP, Labels, Encryption, eDiscovery. Reduces misrouting by 60%+.' },
-  { icon: '\uD83E\uDDE0', title: 'Confidence-Based Routing', desc: 'When agent confidence < 70%, auto-escalate to human or run diagnostic. Show confidence score to admin users.' },
-  { icon: '\uD83D\uDD04', title: 'Error Recovery Loops', desc: 'When first answer fails, offer 3 alternatives before giving up. Track which recovery paths succeed.' },
-  { icon: '\uD83D\uDCDD', title: 'Transcript-Aware Context', desc: 'Use conversation history to avoid repeating questions. Maintain context across agent handoffs.' },
-  { icon: '\u26A0\uFE0F', title: 'Proactive Gap Surfacing', desc: 'When no diagnostic exists for an issue, say so explicitly and suggest manual steps. Don\'t pretend to have coverage.' },
-  { icon: '\uD83D\uDCCA', title: 'Feedback Integration', desc: 'Add "Was this helpful?" after every diagnostic result. Route negative feedback to PG review queue.' }
+  { icon:'\ud83c\udfaf', title:'Structured Entry Point', desc:'Replace open-ended "How can I help?" with categorized options: DLP, Labels, Encryption, eDiscovery. Reduces misrouting by 60%+.' },
+  { icon:'\ud83e\udde0', title:'Confidence-Based Routing', desc:'When agent confidence < 70%, auto-escalate to human or run diagnostic. Show confidence score to admin users.' },
+  { icon:'\ud83d\udd04', title:'Error Recovery Loops', desc:'When first answer fails, offer 3 alternatives before giving up. Track which recovery paths succeed.' },
+  { icon:'\ud83d\udcdd', title:'Transcript-Aware Context', desc:"Use conversation history to avoid repeating questions. Maintain context across agent handoffs." },
+  { icon:'\u26a0\ufe0f', title:'Proactive Gap Surfacing', desc:"When no diagnostic exists for an issue, say so explicitly and suggest manual steps. Don't pretend to have coverage." },
+  { icon:'\ud83d\udcca', title:'Feedback Integration', desc:'Add "Was this helpful?" after every diagnostic result. Route negative feedback to PG review queue.' }
 ];
 
 /* ===== HELPER FUNCTIONS ===== */
@@ -1253,145 +568,75 @@ function escapeHtml(str) {
   div.textContent = str;
   return div.innerHTML;
 }
+function areaColor(a){return{labels:'#2e7d32',encryption:'#1565c0',dlp:'#e65100',ediscovery:'#7b1fa2',other:'#546e7a'}[a]||'#546e7a'}
+function areaLabel(a){return{labels:'Labels',encryption:'Encryption',dlp:'DLP',ediscovery:'eDiscovery',other:'Other'}[a]||a}
+function areaBadge(a){return'<span class="badge badge-'+a+'">'+areaLabel(a)+'</span>'}
+function severityIcon(s){return{critical:'\ud83d\udd34',high:'\ud83d\udfe0',medium:'\ud83d\udfe1',low:'\ud83d\udfe2'}[s]||'\u26aa'}
+function priorityIcon(p){return severityIcon(p)}
+function priorityBadge(p){return'<span class="badge badge-'+p+'">'+p+'</span>'}
+function coverageBadge(c){return'<span class="badge badge-'+c+'">'+coverageLabel(c)+'</span>'}
+function coverageLabel(c){return{covered:'Covered',partial:'Partial',gap:'Gap'}[c]||c}
+function categoryColor(c){return{accuracy:'#dc3545',relevance:'#fd7e14',ux:'#0078d4',missing:'#6f42c1',language:'#20c997'}[c]||'#6c757d'}
+function categoryLabel(c){return{accuracy:'Accuracy',relevance:'Relevance',ux:'UX',missing:'Missing Feature',language:'Language/Clarity'}[c]||c}
+function impactBadge(i){if(i>=4)return'<span class="badge badge-critical">'+i+'/5</span>';if(i>=3)return'<span class="badge badge-high">'+i+'/5</span>';return'<span class="badge badge-medium">'+i+'/5</span>'}
+function downloadFile(fn,content,type){const b=new Blob([content],{type:type||'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(u)}
 
-function areaColor(area) {
-  const colors = { labels:'#2e7d32', encryption:'#1565c0', dlp:'#e65100', ediscovery:'#7b1fa2', other:'#546e7a' };
-  return colors[area] || '#546e7a';
-}
-
-function areaLabel(area) {
-  const labels = { labels:'Labels', encryption:'Encryption', dlp:'DLP', ediscovery:'eDiscovery', other:'Other' };
-  return labels[area] || area;
-}
-
-function severityIcon(severity) {
-  const icons = { critical:'\uD83D\uDD34', high:'\uD83D\uDFE0', medium:'\uD83D\uDFE1', low:'\uD83D\uDFE2' };
-  return icons[severity] || '\u26AA';
-}
-
-function priorityIcon(priority) {
-  const icons = { critical:'\uD83D\uDD34', high:'\uD83D\uDFE0', medium:'\uD83D\uDFE1', low:'\uD83D\uDFE2' };
-  return icons[priority] || '\u26AA';
-}
-
-function priorityBadge(priority) {
-  return '<span class="badge badge-' + priority + '">' + priority + '</span>';
-}
-
-function coverageBadge(coverage) {
-  return '<span class="badge badge-' + coverage + '">' + coverageLabel(coverage) + '</span>';
-}
-
-function coverageLabel(coverage) {
-  const labels = { covered:'Covered', partial:'Partial', gap:'Gap' };
-  return labels[coverage] || coverage;
-}
-
-function categoryColor(cat) {
-  const colors = { accuracy:'#dc3545', relevance:'#fd7e14', ux:'#0078d4', missing:'#6f42c1', language:'#20c997' };
-  return colors[cat] || '#6c757d';
-}
-
-function categoryLabel(cat) {
-  const labels = { accuracy:'Accuracy', relevance:'Relevance', ux:'UX', missing:'Missing Feature', language:'Language/Clarity' };
-  return labels[cat] || cat;
-}
-
-function impactBadge(impact) {
-  if (impact >= 4) return '<span class="badge badge-critical">' + impact + '/5</span>';
-  if (impact >= 3) return '<span class="badge badge-high">' + impact + '/5</span>';
-  return '<span class="badge badge-medium">' + impact + '/5</span>';
-}
-
-function downloadFile(filename, content, type) {
-  const blob = new Blob([content], { type: type || 'text/plain' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function areaBadge(area) {
-  return '<span class="badge badge-' + area + '">' + areaLabel(area) + '</span>';
-}
-
-/* ===== STAR RATING COMPONENT ===== */
+/* ===== STAR RATING ===== */
 function createStarRating(containerId, initialValue, onChange) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.innerHTML = '';
-  let value = initialValue || 0;
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  c.innerHTML = '';
+  let val = initialValue || 0;
   for (let i = 1; i <= 5; i++) {
-    const star = document.createElement('span');
-    star.className = 'star' + (i <= value ? ' filled' : '');
-    star.textContent = '\u2605';
-    star.dataset.value = i;
-    star.addEventListener('click', function() {
-      value = parseInt(this.dataset.value);
-      container.dataset.value = value;
-      container.querySelectorAll('.star').forEach((s, idx) => {
-        s.className = 'star' + (idx < value ? ' filled' : '');
-      });
-      if (onChange) onChange(value);
+    const s = document.createElement('span');
+    s.className = 'star' + (i <= val ? ' filled' : '');
+    s.textContent = '\u2605';
+    s.dataset.value = i;
+    s.addEventListener('click', function() {
+      val = parseInt(this.dataset.value);
+      c.dataset.value = val;
+      c.querySelectorAll('.star').forEach((x,idx) => { x.className = 'star' + (idx < val ? ' filled' : ''); });
+      if (onChange) onChange(val);
     });
-    container.appendChild(star);
+    c.appendChild(s);
   }
-  container.dataset.value = value;
+  c.dataset.value = val;
 }
 
 /* ===== TRANSCRIPT PARSER ===== */
 function parseTranscriptText(text) {
-  const lines = text.split('\n');
-  const messages = [];
-  let currentRole = null;
-  let currentText = '';
+  const lines = text.split('\n'), msgs = [];
+  let role = null, txt = '';
   for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed) continue;
-    const userMatch = trimmed.match(/^(User|Customer|Admin|Me)\s*[:>]\s*(.*)/i);
-    const agentMatch = trimmed.match(/^(Agent|Bot|Assistant|Support|Copilot)\s*[:>]\s*(.*)/i);
-    if (userMatch) {
-      if (currentRole) messages.push({ role: currentRole, text: currentText.trim() });
-      currentRole = 'user';
-      currentText = userMatch[2];
-    } else if (agentMatch) {
-      if (currentRole) messages.push({ role: currentRole, text: currentText.trim() });
-      currentRole = 'agent';
-      currentText = agentMatch[2];
-    } else if (currentRole) {
-      currentText += ' ' + trimmed;
-    }
+    const t = line.trim();
+    if (!t) continue;
+    const um = t.match(/^(User|Customer|Admin|Me)\s*[:>]\s*(.*)/i);
+    const am = t.match(/^(Agent|Bot|Assistant|Support|Copilot)\s*[:>]\s*(.*)/i);
+    if (um) { if (role) msgs.push({role,text:txt.trim()}); role='user'; txt=um[2]; }
+    else if (am) { if (role) msgs.push({role,text:txt.trim()}); role='agent'; txt=am[2]; }
+    else if (role) { txt += ' ' + t; }
   }
-  if (currentRole) messages.push({ role: currentRole, text: currentText.trim() });
-  return messages;
+  if (role) msgs.push({role,text:txt.trim()});
+  return msgs;
 }
 
-function renderTranscript(messages, containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  if (!messages || messages.length === 0) {
-    container.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;">No transcript messages parsed.</p>';
-    return;
-  }
-  let html = '<div class="transcript-viewer">';
-  messages.forEach(m => {
-    html += '<div class="transcript-msg ' + m.role + '">';
-    html += '<div class="role">' + (m.role === 'user' ? '\uD83D\uDC64 User' : '\uD83E\uDD16 Agent') + '</div>';
-    html += '<div>' + escapeHtml(m.text) + '</div>';
-    html += '</div>';
+function renderTranscript(msgs, containerId) {
+  const c = document.getElementById(containerId);
+  if (!c) return;
+  if (!msgs || !msgs.length) { c.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;">No transcript messages parsed.</p>'; return; }
+  let h = '<div class="transcript-viewer">';
+  msgs.forEach(m => {
+    h += '<div class="transcript-msg '+m.role+'"><div class="role">'+(m.role==='user'?'\ud83d\udc64 User':'\ud83e\udd16 Agent')+'</div><div>'+escapeHtml(m.text)+'</div></div>';
   });
-  html += '</div>';
-  container.innerHTML = html;
+  h += '</div>';
+  c.innerHTML = h;
 }
 
-/* ===== THEME TOGGLE ===== */
+/* ===== THEME ===== */
 let currentTheme = localStorage.getItem('purview-theme') || 'light';
 function applyTheme() {
   document.documentElement.setAttribute('data-theme', currentTheme);
-  document.getElementById('themeBtn').textContent = currentTheme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19';
+  document.getElementById('themeBtn').textContent = currentTheme === 'dark' ? '\u2600\ufe0f' : '\ud83c\udf19';
 }
 function toggleTheme() {
   currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -1400,12 +645,11 @@ function toggleTheme() {
 }
 applyTheme();
 
-/* ===== SIDEBAR & NAVIGATION ===== */
+/* ===== SIDEBAR & NAV ===== */
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('open');
   document.querySelector('.sidebar-overlay').classList.toggle('open');
 }
-
 function switchTab(tabId) {
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
@@ -1420,103 +664,586 @@ function switchTab(tabId) {
 /* ===== TAB 1: TEST TRACKER ===== */
 let trackerData = JSON.parse(localStorage.getItem('purview-tracker') || 'null') || {};
 
-function saveTracker() {
-  localStorage.setItem('purview-tracker', JSON.stringify(trackerData));
-  updateQuickStats();
-  alert('Progress saved!');
-}
-
-function resetTracker() {
-  if (confirm('Reset all test results? This cannot be undone.')) {
-    trackerData = {};
-    localStorage.removeItem('purview-tracker');
-    renderTracker();
-    updateQuickStats();
-  }
-}
+function saveTracker() { localStorage.setItem('purview-tracker', JSON.stringify(trackerData)); updateQuickStats(); alert('Progress saved!'); }
+function resetTracker() { if(confirm('Reset all test results?')){ trackerData={}; localStorage.removeItem('purview-tracker'); renderTracker(); updateQuickStats(); } }
 
 function renderTracker() {
-  const areaF = document.getElementById('trackerAreaFilter').value;
-  const statusF = document.getElementById('trackerStatusFilter').value;
+  const aF=document.getElementById('trackerAreaFilter').value, sF=document.getElementById('trackerStatusFilter').value;
+  const filter=d=>{ if(aF!=='all'&&d.area!==aF)return false; const r=trackerData[d.id]?.result||'not-tested'; if(sF!=='all'&&r!==sF)return false; return true; };
+  const solF=solutionsDiagnostics.filter(filter), helpF=helpDiagnostics.filter(filter);
+  const tested=allDiagnostics.filter(d=>trackerData[d.id]?.result&&trackerData[d.id].result!=='not-tested').length;
+  const total=allDiagnostics.length, pct=total>0?Math.round((tested/total)*100):0;
+  document.getElementById('trackerProgress').innerHTML='<div class="progress-bar-container"><div class="progress-bar" style="width:'+pct+'%">'+pct+'% ('+tested+'/'+total+')</div></div>';
+  document.getElementById('trackerCount').textContent='Showing '+(solF.length+helpF.length)+' of '+total;
 
-  const filterDiag = (d) => {
-    if (areaF !== 'all' && d.area !== areaF) return false;
-    const result = trackerData[d.id]?.result || 'not-tested';
-    if (statusF !== 'all' && result !== statusF) return false;
-    return true;
-  };
-
-  const solFiltered = solutionsDiagnostics.filter(filterDiag);
-  const helpFiltered = helpDiagnostics.filter(filterDiag);
-  const totalFiltered = solFiltered.length + helpFiltered.length;
-
-  const tested = allDiagnostics.filter(d => trackerData[d.id]?.result && trackerData[d.id].result !== 'not-tested').length;
-  const total = allDiagnostics.length;
-  const pct = total > 0 ? Math.round((tested / total) * 100) : 0;
-
-  document.getElementById('trackerProgress').innerHTML =
-    '<div class="progress-bar-container"><div class="progress-bar" style="width:' + pct + '%">' + pct + '% (' + tested + '/' + total + ')</div></div>';
-
-  document.getElementById('trackerCount').textContent = 'Showing ' + totalFiltered + ' of ' + total;
-
-  let html = '';
-  const buildRows = (items, isHelp) => {
-    let rows = '';
-    items.forEach((d, i) => {
-      const data = trackerData[d.id] || { result: 'not-tested', notes: '' };
-      rows += '<tr>';
-      rows += '<td>' + (i + 1) + '</td>';
-      rows += '<td><strong>' + escapeHtml(d.name) + '</strong></td>';
-      rows += '<td>' + areaBadge(d.area) + '</td>';
-      rows += '<td style="font-size:12px;">' + escapeHtml(d.checks) + '</td>';
-      rows += '<td style="font-size:12px;">' + escapeHtml(isHelp ? d.role : d.cmdlet) + '</td>';
-      rows += '<td><select onchange="updateTrackerResult(\'' + d.id + '\',this.value)" style="font-size:12px;">';
-      ['not-tested','pass','fail','partial'].forEach(v => {
-        rows += '<option value="' + v + '"' + (data.result === v ? ' selected' : '') + '>' + v.charAt(0).toUpperCase() + v.slice(1).replace('-',' ') + '</option>';
-      });
-      rows += '</select></td>';
-      rows += '<td><textarea rows="1" style="width:120px;font-size:11px;" onchange="updateTrackerNotes(\'' + d.id + '\',this.value)">' + escapeHtml(data.notes) + '</textarea></td>';
-      rows += '</tr>';
+  const buildRows=(items,isHelp)=>{
+    let r='';
+    items.forEach((d,i)=>{
+      const data=trackerData[d.id]||{result:'not-tested',notes:''};
+      r+='<tr><td>'+(i+1)+'</td><td><strong>'+escapeHtml(d.name)+'</strong></td><td>'+areaBadge(d.area)+'</td>';
+      r+='<td style="font-size:12px;">'+escapeHtml(d.checks)+'</td>';
+      r+='<td style="font-size:12px;">'+escapeHtml(isHelp?d.role:d.cmdlet)+'</td>';
+      r+='<td><select onchange="updateTrackerResult(\''+d.id+'\',this.value)" style="font-size:12px;">';
+      ['not-tested','pass','fail','partial'].forEach(v=>{r+='<option value="'+v+'"'+(data.result===v?' selected':'')+'>'+v.charAt(0).toUpperCase()+v.slice(1).replace('-',' ')+'</option>';});
+      r+='</select></td>';
+      r+='<td><textarea rows="1" style="width:120px;font-size:11px;" onchange="updateTrackerNotes(\''+d.id+'\',this.value)">'+escapeHtml(data.notes)+'</textarea></td></tr>';
     });
-    return rows;
+    return r;
   };
 
-  html += '<h3 style="margin:12px 0 8px;">\uD83D\uDCCB Solutions Page Diagnostics (' + solFiltered.length + ')</h3>';
-  html += '<table><thead><tr><th>#</th><th>Diagnostic</th><th>Area</th><th>What It Checks</th><th>Cmdlet</th><th>Result</th><th>Notes</th></tr></thead><tbody>';
-  html += buildRows(solFiltered, false);
-  html += '</tbody></table>';
-
-  html += '<h3 style="margin:20px 0 8px;">\u2753 Help Pane Diagnostics (' + helpFiltered.length + ')</h3>';
-  html += '<table><thead><tr><th>#</th><th>Diagnostic</th><th>Area</th><th>What It Checks</th><th>Role</th><th>Result</th><th>Notes</th></tr></thead><tbody>';
-  html += buildRows(helpFiltered, true);
-  html += '</tbody></table>';
-
-  document.getElementById('trackerTableWrap').innerHTML = html;
+  let h='<h3 style="margin:12px 0 8px;">\ud83d\udccb Solutions Page Diagnostics ('+solF.length+')</h3>';
+  h+='<table><thead><tr><th>#</th><th>Diagnostic</th><th>Area</th><th>What It Checks</th><th>Cmdlet</th><th>Result</th><th>Notes</th></tr></thead><tbody>'+buildRows(solF,false)+'</tbody></table>';
+  h+='<h3 style="margin:20px 0 8px;">\u2753 Help Pane Diagnostics ('+helpF.length+')</h3>';
+  h+='<table><thead><tr><th>#</th><th>Diagnostic</th><th>Area</th><th>What It Checks</th><th>Role</th><th>Result</th><th>Notes</th></tr></thead><tbody>'+buildRows(helpF,true)+'</tbody></table>';
+  document.getElementById('trackerTableWrap').innerHTML=h;
 }
 
-function updateTrackerResult(id, value) {
-  if (!trackerData[id]) trackerData[id] = { result: 'not-tested', notes: '' };
-  trackerData[id].result = value;
-  localStorage.setItem('purview-tracker', JSON.stringify(trackerData));
-  updateQuickStats();
+function updateTrackerResult(id,v){ if(!trackerData[id])trackerData[id]={result:'not-tested',notes:''}; trackerData[id].result=v; localStorage.setItem('purview-tracker',JSON.stringify(trackerData)); updateQuickStats(); }
+function updateTrackerNotes(id,v){ if(!trackerData[id])trackerData[id]={result:'not-tested',notes:''}; trackerData[id].notes=v; localStorage.setItem('purview-tracker',JSON.stringify(trackerData)); }
+function exportTrackerCSV(){
+  let csv='ID,Name,Area,Source,Checks,Result,Notes\n';
+  allDiagnostics.forEach(d=>{const data=trackerData[d.id]||{result:'not-tested',notes:''};csv+='"'+d.id+'","'+d.name.replace(/"/g,'""')+'","'+d.area+'","'+d.source+'","'+d.checks.replace(/"/g,'""')+'","'+data.result+'","'+(data.notes||'').replace(/"/g,'""')+'"\n';});
+  downloadFile('purview-tracker-export.csv',csv,'text/csv');
 }
+function updateQuickStats(){const tested=allDiagnostics.filter(d=>trackerData[d.id]?.result&&trackerData[d.id].result!=='not-tested').length;document.getElementById('statTested').textContent=tested;}
 
-function updateTrackerNotes(id, value) {
-  if (!trackerData[id]) trackerData[id] = { result: 'not-tested', notes: '' };
-  trackerData[id].notes = value;
-  localStorage.setItem('purview-tracker', JSON.stringify(trackerData));
-}
+/* ===== TAB 2: GAP DASHBOARD ===== */
+function renderGaps() {
+  const aF=document.getElementById('gapAreaFilter').value,cF=document.getElementById('gapCoverageFilter').value,sF=document.getElementById('gapSeverityFilter').value;
+  const filtered=gapData.filter(g=>{if(aF!=='all'&&g.area!==aF)return false;if(cF!=='all'&&g.coverage!==cF)return false;if(sF!=='all'&&g.severity!==sF)return false;return true;});
+  const covered=gapData.filter(g=>g.coverage==='covered').length,partial=gapData.filter(g=>g.coverage==='partial').length,gaps=gapData.filter(g=>g.coverage==='gap').length;
+  document.getElementById('gapSummaryCards').innerHTML='<div class="summary-cards"><div class="summary-card"><div class="num">'+gapData.length+'</div><div class="label">Total Issues</div></div><div class="summary-card"><div class="num" style="color:var(--success);">'+covered+'</div><div class="label">Covered</div></div><div class="summary-card"><div class="num" style="color:var(--warning);">'+partial+'</div><div class="label">Partial</div></div><div class="summary-card"><div class="num" style="color:var(--danger);">'+gaps+'</div><div class="label">Gaps</div></div></div>';
 
-function exportTrackerCSV() {
-  let csv = 'ID,Name,Area,Source,Checks,Result,Notes\n';
-  allDiagnostics.forEach(d => {
-    const data = trackerData[d.id] || { result: 'not-tested', notes: '' };
-    csv += '"' + d.id + '","' + d.name.replace(/"/g,'""') + '","' + d.area + '","' + d.source + '","' + d.checks.replace(/"/g,'""') + '","' + data.result + '","' + (data.notes||'').replace(/"/g,'""') + '"\n';
+  let h='';const areas=['labels','encryption','dlp'],names={labels:'Sensitivity Labels',encryption:'Email Encryption',dlp:'Data Loss Prevention'};
+  areas.forEach(area=>{
+    const items=filtered.filter(g=>g.area===area);
+    if(!items.length)return;
+    h+='<h3 style="margin:20px 0 12px;">'+names[area]+' ('+items.length+')</h3><div class="gap-grid">';
+    items.forEach(g=>{
+      h+='<div class="gap-card"><div class="coverage-bar '+g.coverage+'"></div>';
+      h+='<div style="display:flex;align-items:center;gap:8px;margin-top:8px;">'+severityIcon(g.severity)+' '+coverageBadge(g.coverage)+'</div>';
+      h+='<div class="issue-title">'+escapeHtml(g.issue)+'</div>';
+      h+='<div class="meta">\ud83d\udccc Source: '+escapeHtml(g.source)+'</div>';
+      h+='<div class="meta">\ud83d\udd27 Diagnostic: '+escapeHtml(g.diagnostic)+'</div>';
+      h+='<div class="note">\ud83d\udcdd '+escapeHtml(g.note)+'</div></div>';
+    });
+    h+='</div>';
   });
-  downloadFile('purview-tracker-export.csv', csv, 'text/csv');
+  document.getElementById('gapGrid').innerHTML=h;
 }
 
-function updateQuickStats() {
-  const tested = allDiagnostics.filter(d => trackerData[d.id]?.result && trackerData[d.id].result !== 'not-tested').length;
-  document.getElementById('statTested').textContent = tested;
+/* ===== TAB 3: SCENARIOS ===== */
+let scenarioGrades = JSON.parse(localStorage.getItem('purview-scenario-grades') || '{}');
+
+function renderScenarios() {
+  const aF=document.getElementById('scenarioAreaFilter').value,pF=document.getElementById('scenarioPriorityFilter').value;
+  const filtered=scenarios.filter(s=>{if(aF!=='all'&&s.area!==aF)return false;if(pF!=='all'&&s.priority!==pF)return false;return true;});
+  let h='';
+  filtered.forEach(s=>{
+    const g=scenarioGrades[s.id]||{};
+    h+='<div class="scenario-card"><div class="scenario-header" onclick="toggleScenario(\''+s.id+'\')">';
+    h+='<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;"><span style="font-weight:600;">'+escapeHtml(s.title)+'</span> '+priorityBadge(s.priority)+' '+areaBadge(s.area)+'</div>';
+    h+='<span id="toggle-'+s.id+'">\u25bc</span></div>';
+    h+='<div class="scenario-body" id="body-'+s.id+'">';
+    h+='<div class="two-col"><div><h4 style="color:var(--danger);margin-bottom:8px;">\ud83d\udca5 Break Steps</h4><ol class="step-list">';
+    s.breakSteps.forEach(st=>{h+='<li>'+escapeHtml(st)+'</li>';});
+    h+='</ol></div><div><h4 style="color:var(--accent);margin-bottom:8px;">\ud83d\udd0d Diagnostic Steps</h4><ol class="step-list">';
+    s.diagnosticSteps.forEach(st=>{h+='<li>'+escapeHtml(st)+'</li>';});
+    h+='</ol></div></div>';
+    h+='<div style="margin:12px 0;font-size:13px;">\ud83d\udd27 <strong>Diagnostic:</strong> '+escapeHtml(s.diagnostic)+'</div>';
+    h+='<div class="expected-result">\u2705 <strong>Expected Result:</strong> '+escapeHtml(s.expectedResult)+'</div>';
+    h+='<div style="font-size:13px;margin:8px 0;">\ud83d\udc64 <strong>Customer Issue:</strong> '+escapeHtml(s.customerIssue)+'</div>';
+    if(s.cleanup)h+='<div style="background:#fff3cd;border-left:4px solid var(--warning);padding:8px 12px;border-radius:4px;font-size:13px;margin:8px 0;">\ud83e\uddf9 <strong>Cleanup:</strong> '+escapeHtml(s.cleanup)+'</div>';
+    h+='<div class="grade-section"><h4 style="margin-bottom:12px;">\ud83d\udcdd Grade Questions</h4>';
+    s.gradeQuestions.forEach((q,qi)=>{
+      const gv=g['q'+qi]||'not-tested';
+      h+='<div class="grade-question"><span style="flex:1;">'+escapeHtml(q)+'</span><select onchange="updateScenarioGrade(\''+s.id+'\',\'q'+qi+'\',this.value)">';
+      ['not-tested','yes','partial','no'].forEach(v=>{h+='<option value="'+v+'"'+(gv===v?' selected':'')+'>'+v.charAt(0).toUpperCase()+v.slice(1).replace('-',' ')+'</option>';});
+      h+='</select></div>';
+    });
+    h+='<div class="grade-question" style="margin-top:12px;"><span style="flex:1;font-weight:600;">Overall Grade:</span><select onchange="updateScenarioGrade(\''+s.id+'\',\'overall\',this.value)" style="font-weight:600;">';
+    ['','A','B','C','D','F'].forEach(v=>{h+='<option value="'+v+'"'+((g.overall||'')===v?' selected':'')+'>'+(v||'Select...')+'</option>';});
+    h+='</select></div>';
+    h+='<div style="margin-top:8px;"><label style="font-size:12px;font-weight:600;">Notes</label><textarea rows="2" style="width:100%;" onchange="updateScenarioGrade(\''+s.id+'\',\'notes\',this.value)">'+escapeHtml(g.notes||'')+'</textarea></div>';
+    h+='</div></div></div>';
+  });
+  document.getElementById('scenarioList').innerHTML=h;
 }
+
+function toggleScenario(id){const b=document.getElementById('body-'+id),t=document.getElementById('toggle-'+id);const o=b.classList.toggle('open');t.textContent=o?'\u25b2':'\u25bc';}
+function updateScenarioGrade(sid,key,val){if(!scenarioGrades[sid])scenarioGrades[sid]={};scenarioGrades[sid][key]=val;localStorage.setItem('purview-scenario-grades',JSON.stringify(scenarioGrades));}
+function exportScenarioReport(){
+  let r='PURVIEW BREAK & TEST SCENARIO REPORT\n'+'='.repeat(50)+'\nGenerated: '+new Date().toISOString()+'\n\n';
+  scenarios.forEach(s=>{const g=scenarioGrades[s.id]||{};r+='\n'+s.id.toUpperCase()+': '+s.title+'\nPriority: '+s.priority+' | Area: '+s.area+'\nOverall Grade: '+(g.overall||'Not graded')+'\n';s.gradeQuestions.forEach((q,qi)=>{r+='  Q'+(qi+1)+': '+q+' -> '+(g['q'+qi]||'not-tested')+'\n';});if(g.notes)r+='Notes: '+g.notes+'\n';r+='-'.repeat(50)+'\n';});
+  downloadFile('purview-scenario-report.txt',r,'text/plain');
+}
+
+/* ===== TAB 4: FEEDBACK & IMPROVEMENTS ===== */
+let feedbackEntries = JSON.parse(localStorage.getItem('purview-feedback') || '[]');
+
+function renderPreloadedFindings() {
+  let h='';
+  preloadedFindings.forEach(f=>{
+    h+='<div class="finding-card"><div class="finding-header">';
+    h+='<span class="badge" style="background:'+categoryColor(f.category)+';color:#fff;">'+categoryLabel(f.category)+'</span>';
+    h+='<span>'+'\u2b50'.repeat(f.severity)+'</span>';
+    h+='<strong>'+escapeHtml(f.title)+'</strong></div>';
+    // Transcript
+    h+='<div class="transcript-viewer" style="margin-bottom:12px;">';
+    f.transcript.forEach(m=>{h+='<div class="transcript-msg '+m.role+'"><div class="role">'+(m.role==='user'?'\ud83d\udc64 User':'\ud83e\udd16 Agent')+'</div><div>'+escapeHtml(m.text)+'</div></div>';});
+    h+='</div>';
+    h+='<h4 style="font-size:13px;color:var(--danger);margin-bottom:6px;">Critical Failures:</h4><ul class="issue-list">';
+    f.failures.forEach(fl=>{h+='<li>'+escapeHtml(fl)+'</li>';});
+    h+='</ul>';
+    h+='<div style="margin-top:8px;background:var(--accent-light);padding:10px;border-radius:var(--radius-sm);font-size:13px;"><strong>\u2705 Expected Flow:</strong> '+escapeHtml(f.expectedFlow)+'</div>';
+    h+='<div style="margin-top:6px;font-size:12px;color:var(--text-secondary);">Diagnostic: '+escapeHtml(f.diagnostic)+'</div>';
+    h+='</div>';
+  });
+  document.getElementById('preloadedFindings').innerHTML=h;
+}
+
+function parseTranscript() {
+  const text = document.getElementById('transcriptInput').value;
+  const msgs = parseTranscriptText(text);
+  renderTranscript(msgs, 'transcriptPreview');
+}
+
+function addFeedback() {
+  const cat=document.getElementById('fbCategory').value;
+  const diag=document.getElementById('fbDiagnostic').value;
+  const impact=parseInt(document.getElementById('fbImpactStars').dataset.value)||0;
+  const question=document.getElementById('fbQuestion').value;
+  const actual=document.getElementById('fbActual').value;
+  const expected=document.getElementById('fbExpected').value;
+  const suggestion=document.getElementById('fbSuggestion').value;
+  if(!question){alert('Please enter the question/issue.');return;}
+  feedbackEntries.push({id:'fb-'+Date.now(),category:cat,diagnostic:diag,impact,question,actual,expected,suggestion,timestamp:new Date().toISOString()});
+  localStorage.setItem('purview-feedback',JSON.stringify(feedbackEntries));
+  ['fbQuestion','fbActual','fbExpected','fbSuggestion'].forEach(id=>{document.getElementById(id).value='';});
+  renderFeedback();
+}
+
+function deleteFeedback(id) {
+  feedbackEntries=feedbackEntries.filter(f=>f.id!==id);
+  localStorage.setItem('purview-feedback',JSON.stringify(feedbackEntries));
+  renderFeedback();
+}
+
+function renderFeedback() {
+  let h='';
+  feedbackEntries.forEach(f=>{
+    h+='<div class="card" style="position:relative;"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">';
+    h+='<span class="badge" style="background:'+categoryColor(f.category)+';color:#fff;">'+categoryLabel(f.category)+'</span>';
+    h+=impactBadge(f.impact);
+    h+='<small style="color:var(--text-secondary);">'+new Date(f.timestamp).toLocaleDateString()+'</small>';
+    h+='<button class="btn btn-danger btn-sm" style="margin-left:auto;" onclick="deleteFeedback(\''+f.id+'\')">Delete</button></div>';
+    h+='<div style="font-size:13px;"><strong>Q:</strong> '+escapeHtml(f.question)+'</div>';
+    if(f.actual)h+='<div style="font-size:13px;margin-top:4px;"><strong>Actual:</strong> '+escapeHtml(f.actual)+'</div>';
+    if(f.expected)h+='<div style="font-size:13px;margin-top:4px;"><strong>Expected:</strong> '+escapeHtml(f.expected)+'</div>';
+    if(f.suggestion)h+='<div style="font-size:13px;margin-top:4px;"><strong>Suggestion:</strong> '+escapeHtml(f.suggestion)+'</div>';
+    h+='</div>';
+  });
+  document.getElementById('feedbackList').innerHTML=h||'<p style="color:var(--text-secondary);font-size:13px;">No feedback entries yet.</p>';
+  renderFeedbackStats();
+}
+
+function renderImprovements() {
+  let h='';
+  improvementAreas.forEach(ia=>{
+    h+='<div class="improvement-card"><div class="ic-icon">'+ia.icon+'</div><div class="ic-title">'+escapeHtml(ia.title)+'</div><div class="ic-desc">'+escapeHtml(ia.desc)+'</div></div>';
+  });
+  document.getElementById('improvementCards').innerHTML=h;
+}
+
+function renderFeedbackStats() {
+  const all=[...feedbackEntries,...preloadedFindings.map(f=>({category:f.category}))];
+  const cats=['ux','accuracy','relevance','missing','language'];
+  let h='';
+  cats.forEach(c=>{
+    const count=all.filter(f=>f.category===c).length;
+    h+='<div class="fb-stat"><div class="count" style="color:'+categoryColor(c)+';">'+count+'</div><div class="cat-label">'+categoryLabel(c)+'</div></div>';
+  });
+  document.getElementById('feedbackStats').innerHTML=h;
+}
+
+function exportPGReport() {
+  let r='PURVIEW SELF-HELP DIAGNOSTICS \u2014 PG FEEDBACK REPORT\n'+'='.repeat(60)+'\nGenerated: '+new Date().toISOString()+'\nOwner: natripat\n\n';
+  r+='--- PRE-LOADED FINDINGS ---\n';
+  preloadedFindings.forEach(f=>{r+='\n['+f.category.toUpperCase()+'] '+f.title+'\nSeverity: '+f.severity+'/5\nFailures:\n';f.failures.forEach(fl=>{r+='  - '+fl+'\n';});r+='Expected: '+f.expectedFlow+'\n';});
+  r+='\n--- USER FEEDBACK ---\n';
+  feedbackEntries.forEach(f=>{r+='\n['+f.category.toUpperCase()+'] Impact: '+f.impact+'/5\nQ: '+f.question+'\nActual: '+(f.actual||'N/A')+'\nExpected: '+(f.expected||'N/A')+'\nSuggestion: '+(f.suggestion||'N/A')+'\n';});
+  r+='\n--- IMPROVEMENT AREAS ---\n';
+  improvementAreas.forEach(ia=>{r+='\n'+ia.title+': '+ia.desc+'\n';});
+  downloadFile('purview-pg-feedback-report.txt',r,'text/plain');
+}
+
+function exportCompletePackage() {
+  const pkg={timestamp:new Date().toISOString(),owner:'natripat',tracker:trackerData,feedback:feedbackEntries,preloadedFindings,gapData,scenarios,scenarioGrades,adoLog,adoConfig,intakeEntries,improvements:improvementAreas};
+  downloadFile('purview-complete-review-package.json',JSON.stringify(pkg,null,2),'application/json');
+}
+
+/* ===== TAB 5: FEEDBACK LOG & ADO ===== */
+let adoConfig = JSON.parse(localStorage.getItem('purview-ado-config') || '{}');
+let adoLog = JSON.parse(localStorage.getItem('purview-ado-log') || 'null');
+if (!adoLog) {
+  adoLog = [{
+    id:'ado-1',severity:'critical',area:'dlp',title:'DLP: Agent returns completely irrelevant answer',
+    category:'accuracy',description:'Agent responded with account management info for a DLP question.',
+    evidence:[],adoStatus:'pending',timestamp:new Date().toISOString()
+  }];
+  localStorage.setItem('purview-ado-log', JSON.stringify(adoLog));
+}
+
+function loadAdoConfig() {
+  if(adoConfig.orgUrl)document.getElementById('adoOrgUrl').value=adoConfig.orgUrl;
+  if(adoConfig.project)document.getElementById('adoProject').value=adoConfig.project;
+  if(adoConfig.areaPath)document.getElementById('adoAreaPath').value=adoConfig.areaPath;
+  if(adoConfig.wit)document.getElementById('adoWIT').value=adoConfig.wit;
+  if(adoConfig.assignee)document.getElementById('adoAssignee').value=adoConfig.assignee;
+  if(adoConfig.tags)document.getElementById('adoTags').value=adoConfig.tags;
+}
+function saveAdoConfig() {
+  adoConfig={orgUrl:document.getElementById('adoOrgUrl').value,project:document.getElementById('adoProject').value,areaPath:document.getElementById('adoAreaPath').value,wit:document.getElementById('adoWIT').value,assignee:document.getElementById('adoAssignee').value,tags:document.getElementById('adoTags').value};
+  localStorage.setItem('purview-ado-config',JSON.stringify(adoConfig));
+  alert('ADO config saved!');
+}
+
+function renderAdoLog() {
+  const stF=document.getElementById('adoStatusFilter').value,svF=document.getElementById('adoSeverityFilter').value,aF=document.getElementById('adoAreaFilterLog').value;
+  const filtered=adoLog.filter(e=>{if(stF!=='all'&&e.adoStatus!==stF)return false;if(svF!=='all'&&e.severity!==svF)return false;if(aF!=='all'&&e.area!==aF)return false;return true;});
+  const pending=adoLog.filter(e=>e.adoStatus==='pending').length,submitted=adoLog.filter(e=>e.adoStatus==='submitted').length;
+  const critical=adoLog.filter(e=>e.severity==='critical').length;
+  const areas=new Set(adoLog.map(e=>e.area));
+
+  document.getElementById('adoSummaryCards').innerHTML='<div class="summary-cards"><div class="summary-card"><div class="num">'+adoLog.length+'</div><div class="label">Total</div></div><div class="summary-card"><div class="num" style="color:var(--warning);">'+pending+'</div><div class="label">Pending</div></div><div class="summary-card"><div class="num" style="color:var(--success);">'+submitted+'</div><div class="label">Submitted</div></div><div class="summary-card"><div class="num" style="color:var(--danger);">'+critical+'</div><div class="label">Critical</div></div><div class="summary-card"><div class="num">'+areas.size+'</div><div class="label">Areas</div></div></div>';
+
+  let h='<table><thead><tr><th><input type="checkbox" onclick="toggleAllAdo(this)"></th><th>#</th><th>Severity</th><th>Area</th><th>Title</th><th>Category</th><th>Evidence</th><th>ADO Status</th><th>Actions</th></tr></thead><tbody>';
+  filtered.forEach((e,i)=>{
+    h+='<tr><td><input type="checkbox" class="ado-check" data-id="'+e.id+'"></td>';
+    h+='<td>'+(i+1)+'</td><td>'+priorityBadge(e.severity)+'</td><td>'+areaBadge(e.area)+'</td>';
+    h+='<td>'+escapeHtml(e.title)+'</td>';
+    h+='<td><span class="badge" style="background:'+categoryColor(e.category)+';color:#fff;">'+categoryLabel(e.category)+'</span></td>';
+    h+='<td>\ud83d\udcce '+(e.evidence?e.evidence.length:0)+'</td>';
+    h+='<td><span class="badge badge-'+(e.adoStatus==='submitted'?'covered':'partial')+'">'+e.adoStatus+'</span></td>';
+    h+='<td><button class="btn btn-outline btn-sm" onclick="viewAdoEntry(\''+e.id+'\')">View</button> ';
+    h+='<button class="btn btn-primary btn-sm" onclick="submitAdoEntry(\''+e.id+'\')">Submit</button> ';
+    h+='<button class="btn btn-danger btn-sm" onclick="deleteAdoEntry(\''+e.id+'\')">Del</button></td></tr>';
+  });
+  h+='</tbody></table>';
+  document.getElementById('adoTableWrap').innerHTML=h;
+}
+
+function toggleAllAdo(cb){document.querySelectorAll('.ado-check').forEach(c=>{c.checked=cb.checked;});}
+
+function viewAdoEntry(id) {
+  const e=adoLog.find(x=>x.id===id);
+  if(!e)return;
+  let h='<h3>'+escapeHtml(e.title)+'</h3>';
+  h+='<div style="margin:12px 0;display:flex;gap:8px;">'+priorityBadge(e.severity)+areaBadge(e.area)+'<span class="badge" style="background:'+categoryColor(e.category)+';color:#fff;">'+categoryLabel(e.category)+'</span></div>';
+  h+='<div style="font-size:13px;margin:8px 0;">'+escapeHtml(e.description)+'</div>';
+  // Evidence drop zone
+  h+='<h4 style="margin:16px 0 8px;">Evidence</h4>';
+  h+='<div class="evidence-drop" ondragover="event.preventDefault();this.classList.add(\'dragover\')" ondragleave="this.classList.remove(\'dragover\')" ondrop="handleEvidenceDrop(event,\''+e.id+'\')">Drop files here to attach evidence</div>';
+  h+='<div class="evidence-grid" id="evidenceGrid-'+e.id+'">';
+  (e.evidence||[]).forEach((ev,i)=>{
+    if(ev.type&&ev.type.startsWith('image/')){h+='<img class="evidence-thumb" src="'+ev.data+'" title="'+escapeHtml(ev.name)+'">';}
+    else{h+='<div style="padding:4px;font-size:11px;border:1px solid var(--border);border-radius:4px;">\ud83d\udcce '+escapeHtml(ev.name)+'</div>';}
+  });
+  h+='</div>';
+  // ADO preview
+  h+='<h4 style="margin:16px 0 8px;">ADO Work Item Preview</h4>';
+  h+='<div style="background:var(--accent-light);padding:12px;border-radius:var(--radius-sm);font-size:12px;font-family:monospace;white-space:pre-wrap;">'+generateAdoCommand(e)+'</div>';
+  h+='<div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">';
+  h+='<button class="btn btn-primary btn-sm" onclick="copyAdoCommand(\''+e.id+'\')">Copy CLI Command</button>';
+  h+='<button class="btn btn-secondary btn-sm" onclick="downloadEvidencePackage(\''+e.id+'\')">Download Evidence Package</button>';
+  h+='</div>';
+  document.getElementById('detailContent').innerHTML=h;
+  document.getElementById('detailPanel').classList.add('open');
+}
+
+function closeDetailPanel(){document.getElementById('detailPanel').classList.remove('open');}
+
+function generateAdoCommand(entry) {
+  const c=adoConfig;
+  let cmd='az boards work-item create \\\n';
+  cmd+='  --type "'+(c.wit||'Bug')+'" \\\n';
+  cmd+='  --title "'+escapeHtml(entry.title)+'" \\\n';
+  if(c.project)cmd+='  --project "'+c.project+'" \\\n';
+  if(c.areaPath)cmd+='  --area "'+c.areaPath+'" \\\n';
+  if(c.assignee)cmd+='  --assigned-to "'+c.assignee+'" \\\n';
+  cmd+='  --description "'+escapeHtml(entry.description||'')+'" \\\n';
+  cmd+='  --fields "Microsoft.VSTS.Common.Severity='+({critical:'1 - Critical',high:'2 - High',medium:'3 - Medium',low:'4 - Low'}[entry.severity]||'3 - Medium')+'"';
+  if(c.tags)cmd+=' \\\n  --fields "System.Tags='+c.tags+'"';
+  return cmd;
+}
+
+function copyAdoCommand(id){
+  const e=adoLog.find(x=>x.id===id);
+  if(!e)return;
+  navigator.clipboard.writeText(generateAdoCommand(e)).then(()=>alert('Copied to clipboard!'));
+}
+
+function handleEvidenceDrop(event,entryId) {
+  event.preventDefault();
+  event.target.classList.remove('dragover');
+  const e=adoLog.find(x=>x.id===entryId);
+  if(!e)return;
+  if(!e.evidence)e.evidence=[];
+  Array.from(event.dataTransfer.files).forEach(file=>{
+    if(file.type.startsWith('image/')&&file.size<5000000){
+      const reader=new FileReader();
+      reader.onload=function(ev){e.evidence.push({name:file.name,type:file.type,size:file.size,data:ev.target.result});localStorage.setItem('purview-ado-log',JSON.stringify(adoLog));viewAdoEntry(entryId);};
+      reader.readAsDataURL(file);
+    } else if(file.type.startsWith('video/')){
+      e.evidence.push({name:file.name,type:file.type,size:file.size,data:null});
+      localStorage.setItem('purview-ado-log',JSON.stringify(adoLog));viewAdoEntry(entryId);
+    } else {
+      const reader=new FileReader();
+      reader.onload=function(ev){e.evidence.push({name:file.name,type:file.type,size:file.size,data:ev.target.result});localStorage.setItem('purview-ado-log',JSON.stringify(adoLog));viewAdoEntry(entryId);};
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+function downloadEvidencePackage(id){
+  const e=adoLog.find(x=>x.id===id);
+  if(!e)return;
+  const pkg={entry:e,adoCommand:generateAdoCommand(e),exported:new Date().toISOString()};
+  downloadFile('evidence-package-'+e.id+'.json',JSON.stringify(pkg,null,2),'application/json');
+}
+
+function submitAdoEntry(id){const e=adoLog.find(x=>x.id===id);if(!e)return;e.adoStatus='submitted';localStorage.setItem('purview-ado-log',JSON.stringify(adoLog));renderAdoLog();alert('Marked as submitted. Use the CLI command to create the work item.');}
+function deleteAdoEntry(id){adoLog=adoLog.filter(x=>x.id!==id);localStorage.setItem('purview-ado-log',JSON.stringify(adoLog));renderAdoLog();closeDetailPanel();}
+function submitAllPending(){adoLog.forEach(e=>{if(e.adoStatus==='pending')e.adoStatus='submitted';});localStorage.setItem('purview-ado-log',JSON.stringify(adoLog));renderAdoLog();alert('All pending items marked as submitted.');}
+
+function importFromIntake(){
+  intakeEntries.forEach(ie=>{
+    if(adoLog.find(a=>a.id==='ado-intake-'+ie.id))return;
+    adoLog.push({id:'ado-intake-'+ie.id,severity:'medium',area:ie.area||'other',title:ie.text?.substring(0,80)||'Intake entry',category:ie.category||'ux',description:ie.text||'',evidence:ie.files||[],adoStatus:'pending',timestamp:ie.timestamp});
+  });
+  localStorage.setItem('purview-ado-log',JSON.stringify(adoLog));
+  renderAdoLog();
+  alert('Imported '+intakeEntries.length+' entries from Intake.');
+}
+
+function exportAdoCSV(){
+  let csv='ID,Severity,Area,Title,Category,ADO Status,Timestamp\n';
+  adoLog.forEach(e=>{csv+='"'+e.id+'","'+e.severity+'","'+e.area+'","'+e.title.replace(/"/g,'""')+'","'+e.category+'","'+e.adoStatus+'","'+e.timestamp+'"\n';});
+  downloadFile('purview-ado-log-export.csv',csv,'text/csv');
+}
+
+/* ===== TAB 6: FEEDBACK INTAKE ===== */
+let intakeEntries = JSON.parse(localStorage.getItem('purview-intake') || 'null');
+let intakeFiles = [];
+let intakeSelectedCategory = '';
+let intakeFilter = 'all';
+
+if (!intakeEntries) {
+  intakeEntries = [{
+    id:'intake-preload-1', text:'DLP diagnostic returned wrong answer. Agent suggested changing email settings instead of running DLP policy check. Completely irrelevant response.',
+    area:'dlp', entryPoint:'support-assistant', diagnostic:'', category:'accuracy',
+    status:'new', files:[], timestamp:new Date().toISOString()
+  }];
+  localStorage.setItem('purview-intake', JSON.stringify(intakeEntries));
+}
+
+function applyTemplate(type) {
+  const templates = {
+    test: 'Diagnostic: [Name]\nTest Date: '+new Date().toLocaleDateString()+'\nResult: [pass/fail/partial]\nSteps Taken:\n1. \n2. \n3. \nExpected: \nActual: \nNotes: ',
+    conversation: 'User: [What the user asked]\nAgent: [What the agent responded]\nUser: [Follow-up]\nAgent: [Response]\n\nIssue: \nExpected behavior: ',
+    bug: 'Summary: [Brief description]\nSeverity: [critical/high/medium/low]\nArea: [DLP/Labels/Encryption/eDiscovery]\nSteps to Reproduce:\n1. \n2. \n3. \nExpected: \nActual: \nWorkaround: '
+  };
+  document.getElementById('intakeText').value = templates[type] || '';
+}
+
+function autoDetectCategory(text) {
+  const t = text.toLowerCase();
+  if (/wrong|incorrect|irrelevant|inaccurate/.test(t)) return 'accuracy';
+  if (/not relevant|generic|open.ended|misroute/.test(t)) return 'relevance';
+  if (/ui|ux|interface|confusing|unclear|hard to find/.test(t)) return 'ux';
+  if (/missing|no diagnostic|not covered|gap/.test(t)) return 'missing';
+  if (/grammar|wording|language|clarity|tone/.test(t)) return 'language';
+  return '';
+}
+
+function renderIntakeCategoryBtns() {
+  const cats = ['accuracy','relevance','ux','missing','language'];
+  let h = '';
+  cats.forEach(c => {
+    h += '<button class="btn btn-sm" style="background:'+categoryColor(c)+';color:#fff;opacity:'+(intakeSelectedCategory===c?'1':'.5')+'" onclick="selectIntakeCategory(\''+c+'\')">'+categoryLabel(c)+'</button>';
+  });
+  document.getElementById('intakeCategoryBtns').innerHTML = h;
+}
+
+function selectIntakeCategory(c) {
+  intakeSelectedCategory = intakeSelectedCategory === c ? '' : c;
+  renderIntakeCategoryBtns();
+}
+
+function captureIntakeEntry() {
+  const text = document.getElementById('intakeText').value;
+  if (!text.trim()) { alert('Please enter feedback text.'); return; }
+  const area = document.getElementById('intakeArea').value;
+  const entryPoint = document.getElementById('intakeEntryPoint').value;
+  const diagnostic = document.getElementById('intakeDiagnostic').value;
+  const category = intakeSelectedCategory || autoDetectCategory(text);
+  const entry = {
+    id: 'intake-' + Date.now(), text, area, entryPoint, diagnostic, category,
+    status: 'new', files: intakeFiles.map(f=>({name:f.name,type:f.type,size:f.size})),
+    timestamp: new Date().toISOString()
+  };
+  intakeEntries.push(entry);
+  localStorage.setItem('purview-intake', JSON.stringify(intakeEntries));
+  document.getElementById('intakeText').value = '';
+  intakeFiles = [];
+  document.getElementById('intakeFileList').innerHTML = '';
+  intakeSelectedCategory = '';
+  renderIntakeCategoryBtns();
+  renderIntakeEntries();
+}
+
+function filterIntakeEntries(filter, btn) {
+  intakeFilter = filter;
+  document.querySelectorAll('.intake-filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  renderIntakeEntries();
+}
+
+function renderIntakeEntries() {
+  const filtered = intakeEntries.filter(e => {
+    if (intakeFilter === 'new') return e.status === 'new';
+    if (intakeFilter === 'analyzed') return e.status === 'analyzed';
+    return true;
+  });
+  let h = '';
+  filtered.forEach(e => {
+    h += '<div class="intake-entry-card" onclick="previewIntakeEntry(\''+e.id+'\')">';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">';
+    if (e.category) h += '<span class="badge" style="background:'+categoryColor(e.category)+';color:#fff;font-size:10px;">'+categoryLabel(e.category)+'</span>';
+    if (e.area) h += areaBadge(e.area);
+    h += '<span style="font-size:11px;color:var(--text-secondary);margin-left:auto;">'+new Date(e.timestamp).toLocaleDateString()+'</span>';
+    h += '</div>';
+    h += '<div style="font-size:12px;">'+escapeHtml((e.text||'').substring(0, 100))+(e.text&&e.text.length>100?'...':'')+'</div>';
+    h += '</div>';
+  });
+  document.getElementById('intakeEntriesFeed').innerHTML = h || '<p style="font-size:13px;color:var(--text-secondary);">No entries.</p>';
+}
+
+function previewIntakeEntry(id) {
+  const e = intakeEntries.find(x => x.id === id);
+  if (!e) return;
+  let h = '<div style="font-size:13px;">';
+  h += '<div style="display:flex;gap:6px;margin-bottom:8px;">';
+  if (e.category) h += '<span class="badge" style="background:'+categoryColor(e.category)+';color:#fff;">'+categoryLabel(e.category)+'</span>';
+  if (e.area) h += areaBadge(e.area);
+  h += '</div>';
+  h += '<div style="margin-bottom:8px;"><strong>Entry Point:</strong> '+(e.entryPoint||'N/A')+'</div>';
+  h += '<div style="margin-bottom:8px;"><strong>Diagnostic:</strong> '+(e.diagnostic||'N/A')+'</div>';
+  h += '<div style="background:#161b22;color:#c9d1d9;padding:12px;border-radius:var(--radius-sm);font-family:monospace;font-size:12px;white-space:pre-wrap;max-height:200px;overflow-y:auto;">'+escapeHtml(e.text)+'</div>';
+  if (e.files && e.files.length) {
+    h += '<div style="margin-top:8px;"><strong>Attachments:</strong></div>';
+    e.files.forEach(f => { h += '<div style="font-size:12px;">\ud83d\udcce '+escapeHtml(f.name)+' ('+Math.round(f.size/1024)+'KB)</div>'; });
+  }
+  h += '<div style="margin-top:12px;display:flex;gap:8px;">';
+  h += '<button class="btn btn-danger btn-sm" onclick="deleteIntakeEntry(\''+e.id+'\')">Delete</button>';
+  h += '<button class="btn btn-outline btn-sm" onclick="markIntakeAnalyzed(\''+e.id+'\')">Mark Analyzed</button>';
+  h += '</div></div>';
+  document.getElementById('intakePreviewContent').innerHTML = h;
+  document.getElementById('intakePreviewPanel').style.display = 'block';
+}
+
+function deleteIntakeEntry(id) {
+  intakeEntries = intakeEntries.filter(x => x.id !== id);
+  localStorage.setItem('purview-intake', JSON.stringify(intakeEntries));
+  renderIntakeEntries();
+  document.getElementById('intakePreviewPanel').style.display = 'none';
+}
+
+function markIntakeAnalyzed(id) {
+  const e = intakeEntries.find(x => x.id === id);
+  if (e) { e.status = 'analyzed'; localStorage.setItem('purview-intake', JSON.stringify(intakeEntries)); renderIntakeEntries(); previewIntakeEntry(id); }
+}
+
+function exportForCopilotAnalysis() {
+  const pkg = { timestamp: new Date().toISOString(), entries: intakeEntries, instructions: 'Analyze each entry for: category accuracy, severity assessment, diagnostic coverage gaps, and improvement suggestions.' };
+  downloadFile('purview-intake-for-copilot.json', JSON.stringify(pkg, null, 2), 'application/json');
+}
+
+function saveAllIntakeData() {
+  localStorage.setItem('purview-intake', JSON.stringify(intakeEntries));
+  alert('All intake data saved!');
+}
+
+/* ===== DIAGNOSTIC SELECT POPULATORS ===== */
+function populateDiagnosticSelects() {
+  const opts = '<option value="">Select...</option>' + allDiagnostics.map(d => '<option value="'+escapeHtml(d.name)+'">'+escapeHtml(d.name)+'</option>').join('');
+  ['fbDiagnostic','intakeDiagnostic'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = opts;
+  });
+}
+
+/* ===== FILE DROP ZONES ===== */
+function setupIntakeDropZone() {
+  const dz = document.getElementById('intakeDropZone');
+  const fi = document.getElementById('intakeFileInput');
+  if (!dz || !fi) return;
+  dz.addEventListener('click', () => fi.click());
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+  dz.addEventListener('drop', e => {
+    e.preventDefault(); dz.classList.remove('dragover');
+    handleIntakeFiles(e.dataTransfer.files);
+  });
+  fi.addEventListener('change', () => handleIntakeFiles(fi.files));
+}
+
+function handleIntakeFiles(files) {
+  Array.from(files).forEach(f => { intakeFiles.push(f); });
+  let h = '';
+  intakeFiles.forEach((f, i) => {
+    h += '<div style="font-size:12px;padding:4px;display:flex;align-items:center;gap:4px;">\ud83d\udcce '+escapeHtml(f.name)+' ('+Math.round(f.size/1024)+'KB) <button class="btn btn-danger btn-sm" onclick="removeIntakeFile('+i+')" style="padding:1px 6px;font-size:10px;">x</button></div>';
+  });
+  document.getElementById('intakeFileList').innerHTML = h;
+}
+
+function removeIntakeFile(i) {
+  intakeFiles.splice(i, 1);
+  handleIntakeFiles([]);
+}
+
+/* ===== AUTO-DETECT ON TEXT INPUT ===== */
+document.addEventListener('DOMContentLoaded', function() {
+  const ta = document.getElementById('intakeText');
+  if (ta) {
+    ta.addEventListener('input', function() {
+      const detected = autoDetectCategory(this.value);
+      if (detected && detected !== intakeSelectedCategory) {
+        intakeSelectedCategory = detected;
+        renderIntakeCategoryBtns();
+      }
+    });
+  }
+});
+
+/* ===== INITIALIZATION ===== */
+document.addEventListener('DOMContentLoaded', function() {
+  renderTracker();
+  renderGaps();
+  renderScenarios();
+  renderPreloadedFindings();
+  renderFeedback();
+  renderImprovements();
+  renderFeedbackStats();
+  loadAdoConfig();
+  renderAdoLog();
+  renderIntakeEntries();
+  renderIntakeCategoryBtns();
+  populateDiagnosticSelects();
+  createStarRating('fbImpactStars', 0);
+  setupIntakeDropZone();
+  updateQuickStats();
+});
+</script>
+</body>
+</html>
