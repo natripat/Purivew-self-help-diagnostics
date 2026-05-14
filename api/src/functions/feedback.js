@@ -1,18 +1,19 @@
 const { app } = require('@azure/functions');
 const { TableClient, TableServiceClient } = require('@azure/data-tables');
+const { DefaultAzureCredential } = require('@azure/identity');
 
 const TABLE_NAME = 'PurviewFeedback';
+const STORAGE_ACCOUNT_URL = process.env.TABLE_STORAGE_URL || 'https://purviewfeedbackstore.table.core.windows.net';
 const MAX_BODY_SIZE = 10000; // 10KB max per submission
 
+const credential = new DefaultAzureCredential();
+
 function getTableClient() {
-  const connStr = process.env.TABLE_STORAGE_CONNECTION;
-  if (!connStr) throw new Error('TABLE_STORAGE_CONNECTION not configured');
-  return TableClient.fromConnectionString(connStr, TABLE_NAME);
+  return new TableClient(STORAGE_ACCOUNT_URL, TABLE_NAME, credential);
 }
 
 async function ensureTable() {
-  const connStr = process.env.TABLE_STORAGE_CONNECTION;
-  const serviceClient = TableServiceClient.fromConnectionString(connStr);
+  const serviceClient = new TableServiceClient(STORAGE_ACCOUNT_URL, credential);
   try {
     await serviceClient.createTable(TABLE_NAME);
   } catch (e) {
