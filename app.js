@@ -650,7 +650,7 @@ async function refreshFeedbackReport() {
                 ${f.files.map(file => {
                   if (file.type && file.type.startsWith('image/')) {
                     return '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;max-width:400px">' +
-                      '<img src="' + file.data + '" alt="' + (file.name || 'screenshot') + '" style="width:100%;display:block;cursor:pointer" onclick="window.open(this.src,\\'_blank\\')" title="Click to view full size">' +
+                      '<img src="' + file.data + '" alt="' + (file.name || 'screenshot') + '" style="width:100%;display:block;cursor:pointer" onclick="window.open(this.src,\'_blank\')" title="Click to view full size">' +
                       '<div style="padding:6px 8px;font-size:11px;color:var(--text-secondary);background:var(--surface-hover)">' + (file.name || 'screenshot') + '</div>' +
                     '</div>';
                   } else {
