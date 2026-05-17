@@ -528,7 +528,8 @@ async function refreshFeedbackReport() {
     notes: f.notes || '',
     submittedBy: 'You (local)',
     createdAt: f.timestamp || '',
-    source: 'local'
+    source: 'local',
+    files: f.files || []
   }));
 
   // Mark API feedback
@@ -634,14 +635,33 @@ async function refreshFeedbackReport() {
 
     // Expandable details under table
     html += `<div style="margin-top:24px">
-      <h3 style="font-size:15px;color:var(--text);margin-bottom:16px">📝 Detailed Notes</h3>
-      ${allFeedback.filter(f => f.description || f.notes).map((f, i) => `
+      <h3 style="font-size:15px;color:var(--text);margin-bottom:16px">📝 Detailed Notes & Evidence</h3>
+      ${allFeedback.filter(f => f.description || f.notes || (f.files && f.files.length)).map((f, i) => `
         <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <strong style="color:var(--text);font-size:13px">${f.diagnosticName || 'Unnamed'}</strong>
             <span style="font-size:11px;color:var(--text-secondary)">${f.submittedBy || '-'} · ${f.createdAt ? new Date(f.createdAt).toLocaleDateString() : '-'}</span>
           </div>
           <p style="color:var(--text-secondary);font-size:13px;line-height:1.6;margin:0;white-space:pre-wrap">${(f.description || f.notes || '').substring(0, 1000)}</p>
+          ${f.files && f.files.length ? `
+            <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
+              <p style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">📎 Attached Evidence (${f.files.length}):</p>
+              <div style="display:flex;flex-wrap:wrap;gap:12px">
+                ${f.files.map(file => {
+                  if (file.type && file.type.startsWith('image/')) {
+                    return '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;max-width:400px">' +
+                      '<img src="' + file.data + '" alt="' + (file.name || 'screenshot') + '" style="width:100%;display:block;cursor:pointer" onclick="window.open(this.src,\\'_blank\\')" title="Click to view full size">' +
+                      '<div style="padding:6px 8px;font-size:11px;color:var(--text-secondary);background:var(--surface-hover)">' + (file.name || 'screenshot') + '</div>' +
+                    '</div>';
+                  } else {
+                    return '<div style="background:var(--surface-hover);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--text)">' +
+                      '📄 ' + (file.name || 'file') + ' (' + (file.size ? Math.round(file.size/1024) + 'KB' : 'unknown size') + ')' +
+                    '</div>';
+                  }
+                }).join('')}
+              </div>
+            </div>
+          ` : ''}
         </div>
       `).join('')}
     </div>`;
@@ -677,6 +697,112 @@ function exportFeedbackReport() {
   a.download = `purview-feedback-report-${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function generateHTMLReport() {
+  const allLocal = JSON.parse(localStorage.getItem('purview-diag-feedback') || '[]');
+  if (allLocal.length === 0) { alert('No feedback to generate report from.'); return; }
+
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  const statusLabels = {
+    'pass': '✅ Pass', 'partial': '⚠️ Partial', 'fail': '❌ Fail', 'not-tested': '⏸️ Not Tested'
+  };
+  const statusColors = {
+    'pass': '#4caf50', 'partial': '#ff9800', 'fail': '#f44336', 'not-tested': '#9e9e9e'
+  };
+  const sevColors = { low: '#4caf50', medium: '#ff9800', high: '#f44336', critical: '#d32f2f' };
+
+  // Stats
+  const total = allLocal.length;
+  const byStatus = {};
+  allLocal.forEach(f => { byStatus[f.status] = (byStatus[f.status]||0) + 1; });
+
+  let entriesHtml = allLocal.map((f, idx) => {
+    const screenshotsHtml = (f.files || []).filter(file => file.type && file.type.startsWith('image/')).map(file =>
+      `<div style="margin:8px 0;border:1px solid #ddd;border-radius:8px;overflow:hidden;max-width:600px">
+        <img src="${file.data}" alt="${file.name || 'screenshot'}" style="width:100%;display:block">
+        <div style="padding:6px 10px;font-size:11px;color:#666;background:#f8f8f8">${file.name || 'screenshot'}</div>
+      </div>`
+    ).join('');
+
+    const nonImageFiles = (f.files || []).filter(file => !file.type || !file.type.startsWith('image/')).map(file =>
+      `<span style="background:#f0f0f0;padding:3px 8px;border-radius:4px;font-size:11px;margin-right:4px">📄 ${file.name || 'file'}</span>`
+    ).join('');
+
+    return `
+      <div style="border:1px solid #e0e0e0;border-radius:12px;padding:24px;margin-bottom:20px;page-break-inside:avoid">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3 style="margin:0;font-size:16px;color:#1a1a1a">${idx+1}. ${f.diagnosticName || 'Unnamed Diagnostic'}</h3>
+          <span style="font-size:12px;color:#666">${f.timestamp ? new Date(f.timestamp).toLocaleString() : '-'}</span>
+        </div>
+        <div style="display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap">
+          <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;background:${(statusColors[f.status]||'#999')+'22'};color:${statusColors[f.status]||'#999'}">${statusLabels[f.status] || f.status || 'Unknown'}</span>
+          <span style="padding:4px 12px;border-radius:20px;font-size:12px;background:#e8f5e9;color:#2e7d32">${(f.area||'').toUpperCase()}</span>
+          <span style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600;color:${sevColors[f.severity]||'#999'}">Severity: ${(f.severity||'medium').charAt(0).toUpperCase()+(f.severity||'medium').slice(1)}</span>
+        </div>
+        <div style="background:#f9f9f9;border-radius:8px;padding:16px;margin-bottom:12px">
+          <p style="margin:0;font-size:14px;line-height:1.7;color:#333;white-space:pre-wrap">${(f.notes||'No notes provided.').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</p>
+        </div>
+        ${screenshotsHtml ? '<div style="margin-top:12px"><p style="font-size:13px;font-weight:600;color:#444;margin-bottom:8px">📸 Evidence Screenshots:</p>' + screenshotsHtml + '</div>' : ''}
+        ${nonImageFiles ? '<div style="margin-top:8px">' + nonImageFiles + '</div>' : ''}
+      </div>`;
+  }).join('');
+
+  const reportHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purview Diagnostics Feedback Report - ${now.toISOString().slice(0,10)}</title>
+  <style>
+    @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 900px; margin: 0 auto; padding: 40px 20px; color: #1a1a1a; background: #fff; }
+    h1 { font-size: 24px; margin-bottom: 4px; }
+    h2 { font-size: 18px; margin-top: 32px; margin-bottom: 16px; border-bottom: 2px solid #107c10; padding-bottom: 8px; }
+  </style>
+</head>
+<body>
+  <div style="text-align:center;margin-bottom:40px;border-bottom:3px solid #107c10;padding-bottom:24px">
+    <h1>🔬 Purview Self-Help Diagnostics</h1>
+    <h2 style="border:none;margin:8px 0;color:#666;font-weight:400">Feedback Report</h2>
+    <p style="color:#888;font-size:13px">Generated on ${dateStr}</p>
+  </div>
+
+  <h2>📊 Summary</h2>
+  <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px">
+    <div style="background:#f0f7ff;border-radius:10px;padding:16px 24px;text-align:center;min-width:100px">
+      <div style="font-size:28px;font-weight:700;color:#0078d4">${total}</div>
+      <div style="font-size:12px;color:#666">Total Tested</div>
+    </div>
+    ${Object.entries(byStatus).map(([s,c]) => `
+    <div style="background:${(statusColors[s]||'#999')+'11'};border-radius:10px;padding:16px 24px;text-align:center;min-width:100px">
+      <div style="font-size:28px;font-weight:700;color:${statusColors[s]||'#999'}">${c}</div>
+      <div style="font-size:12px;color:#666">${statusLabels[s]||s}</div>
+    </div>`).join('')}
+  </div>
+
+  <h2>📝 Detailed Findings</h2>
+  ${entriesHtml}
+
+  <div style="text-align:center;margin-top:40px;padding-top:20px;border-top:1px solid #eee;color:#999;font-size:12px">
+    <p>Report generated by Purview Self-Help Diagnostics Review Portal</p>
+    <p>CEM Purview CARE Team · Microsoft</p>
+  </div>
+</body>
+</html>`;
+
+  const blob = new Blob([reportHtml], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `purview-diagnostics-report-${now.toISOString().slice(0,10)}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  // Also open in new tab for preview
+  window.open(url, '_blank');
 }
 
 function renderPGView() {
