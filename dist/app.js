@@ -488,6 +488,197 @@ async function submitDiagnosticFeedback(diagId, area) {
   showDiagnosticCards(area);
 }
 
+// ==================== FEEDBACK REPORT VIEW ====================
+function enterFeedbackReportView() {
+  document.getElementById('home-page').style.display = 'none';
+  document.getElementById('feedback-report-view').style.display = 'block';
+  refreshFeedbackReport();
+}
+
+function leaveFeedbackReportView() {
+  document.getElementById('feedback-report-view').style.display = 'none';
+  document.getElementById('home-page').style.display = '';
+}
+
+async function refreshFeedbackReport() {
+  const container = document.getElementById('feedback-report-content');
+  container.innerHTML = '<div style="text-align:center;padding:60px"><div style="font-size:36px;margin-bottom:12px">⏳</div><p style="color:var(--text-secondary)">Loading feedback from server...</p></div>';
+
+  let apiFeedback = [];
+  let apiError = null;
+
+  try {
+    const res = await fetch('/api/feedback');
+    if (res.ok) {
+      apiFeedback = await res.json();
+    } else {
+      apiError = `API returned ${res.status}`;
+    }
+  } catch (e) {
+    apiError = e.message;
+  }
+
+  // Also include local feedback
+  const localFeedback = JSON.parse(localStorage.getItem('purview-diag-feedback') || '[]').map(f => ({
+    diagnosticName: f.diagnosticName || '',
+    area: f.area || '',
+    testResult: f.status || '',
+    severity: f.severity || 'medium',
+    description: f.notes || '',
+    notes: f.notes || '',
+    submittedBy: 'You (local)',
+    createdAt: f.timestamp || '',
+    source: 'local'
+  }));
+
+  // Mark API feedback
+  apiFeedback = apiFeedback.map(f => ({ ...f, source: 'cloud' }));
+
+  // Merge, deduplicate by matching diagnosticName + notes + close timestamps
+  const allFeedback = [...apiFeedback, ...localFeedback];
+  
+  // Sort by date, newest first
+  allFeedback.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+
+  // Stats
+  const cloudCount = apiFeedback.length;
+  const localCount = localFeedback.length;
+  const totalCount = allFeedback.length;
+  
+  const statusCounts = {};
+  allFeedback.forEach(f => {
+    const s = f.testResult || f.status || 'unknown';
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+  });
+
+  const statusBadges = {
+    'working': { color: '#4caf50', bg: '#0d3320', label: '✅ Working' },
+    'partially-working': { color: '#ff9800', bg: '#3d2800', label: '⚠️ Partial' },
+    'not-working': { color: '#f44336', bg: '#3d0a0a', label: '❌ Not Working' },
+    'not-tested': { color: '#9e9e9e', bg: '#2a2a2a', label: '⏸️ Not Tested' },
+    'unknown': { color: '#9e9e9e', bg: '#2a2a2a', label: '❓ Unknown' }
+  };
+
+  let html = '';
+
+  // Error banner if API failed
+  if (apiError) {
+    html += `<div style="background:#3d0a0a;border:1px solid #f44336;border-radius:8px;padding:12px 16px;margin-bottom:20px;color:#f44336;font-size:13px">
+      ⚠️ Could not load cloud feedback: ${apiError}. Showing local data only.
+    </div>`;
+  }
+
+  // Summary stats bar
+  html += `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:32px">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:var(--text)">${totalCount}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">Total Feedback</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:#0078d4">${cloudCount}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">☁️ Cloud Synced</div>
+    </div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center">
+      <div style="font-size:28px;font-weight:700;color:#ff9800">${localCount}</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">💾 Local Only</div>
+    </div>
+    ${Object.entries(statusCounts).map(([status, count]) => {
+      const badge = statusBadges[status] || statusBadges['unknown'];
+      return `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center">
+        <div style="font-size:28px;font-weight:700;color:${badge.color}">${count}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:4px">${badge.label}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  // Feedback table
+  if (allFeedback.length === 0) {
+    html += `<div style="text-align:center;padding:60px">
+      <div style="font-size:48px;margin-bottom:16px">📭</div>
+      <h3 style="color:var(--text);margin-bottom:8px">No feedback yet</h3>
+      <p style="color:var(--text-secondary);font-size:13px">Go to Diagnostics → select a diagnostic → test it → submit feedback</p>
+    </div>`;
+  } else {
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden">
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="background:var(--surface-hover);text-align:left">
+            <th style="padding:12px 16px;color:var(--text-secondary);font-weight:600;border-bottom:1px solid var(--border)">Diagnostic</th>
+            <th style="padding:12px 16px;color:var(--text-secondary);font-weight:600;border-bottom:1px solid var(--border)">Area</th>
+            <th style="padding:12px 16px;color:var(--text-secondary);font-weight:600;border-bottom:1px solid var(--border)">Status</th>
+            <th style="padding:12px 16px;color:var(--text-secondary);font-weight:600;border-bottom:1px solid var(--border)">Severity</th>
+            <th style="padding:12px 16px;color:var(--text-secondary);font-weight:600;border-bottom:1px solid var(--border)">Submitted By</th>
+            <th style="padding:12px 16px;color:var(--text-secondary);font-weight:600;border-bottom:1px solid var(--border)">Date</th>
+            <th style="padding:12px 16px;color:var(--text-secondary);font-weight:600;border-bottom:1px solid var(--border)">Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${allFeedback.map(f => {
+            const status = f.testResult || f.status || 'unknown';
+            const badge = statusBadges[status] || statusBadges['unknown'];
+            const sevColors = { low: '#4caf50', medium: '#ff9800', high: '#f44336', critical: '#d32f2f' };
+            const date = f.createdAt ? new Date(f.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+            return `<tr style="border-bottom:1px solid var(--border)" title="${(f.description || f.notes || '').replace(/"/g, '&quot;').substring(0, 300)}">
+              <td style="padding:12px 16px;color:var(--text);max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.diagnosticName || '-'}</td>
+              <td style="padding:12px 16px"><span style="font-size:11px;background:${f.area === 'dlp' ? '#0d3320' : '#2a1a4a'};color:${f.area === 'dlp' ? '#4caf50' : '#a08ae0'};padding:2px 8px;border-radius:8px">${(f.area || f.category || '-').toUpperCase()}</span></td>
+              <td style="padding:12px 16px"><span style="font-size:11px;background:${badge.bg};color:${badge.color};padding:2px 8px;border-radius:8px">${badge.label}</span></td>
+              <td style="padding:12px 16px"><span style="color:${sevColors[f.severity] || '#9e9e9e'};font-weight:600;text-transform:capitalize">${f.severity || '-'}</span></td>
+              <td style="padding:12px 16px;color:var(--text-secondary)">${f.submittedBy || f.submittedByEmail || '-'}</td>
+              <td style="padding:12px 16px;color:var(--text-secondary);white-space:nowrap">${date}</td>
+              <td style="padding:12px 16px"><span style="font-size:11px;padding:2px 8px;border-radius:8px;background:${f.source === 'cloud' ? '#002b4d' : '#3d2800'};color:${f.source === 'cloud' ? '#0078d4' : '#ff9800'}">${f.source === 'cloud' ? '☁️ Cloud' : '💾 Local'}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+    // Expandable details under table
+    html += `<div style="margin-top:24px">
+      <h3 style="font-size:15px;color:var(--text);margin-bottom:16px">📝 Detailed Notes</h3>
+      ${allFeedback.filter(f => f.description || f.notes).map((f, i) => `
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <strong style="color:var(--text);font-size:13px">${f.diagnosticName || 'Unnamed'}</strong>
+            <span style="font-size:11px;color:var(--text-secondary)">${f.submittedBy || '-'} · ${f.createdAt ? new Date(f.createdAt).toLocaleDateString() : '-'}</span>
+          </div>
+          <p style="color:var(--text-secondary);font-size:13px;line-height:1.6;margin:0;white-space:pre-wrap">${(f.description || f.notes || '').substring(0, 1000)}</p>
+        </div>
+      `).join('')}
+    </div>`;
+  }
+
+  container.innerHTML = html;
+}
+
+function exportFeedbackReport() {
+  // Gather all visible feedback and export as CSV
+  const localFeedback = JSON.parse(localStorage.getItem('purview-diag-feedback') || '[]');
+  
+  const rows = [['Diagnostic', 'Area', 'Status', 'Severity', 'Notes', 'Submitted By', 'Date', 'Source']];
+  localFeedback.forEach(f => {
+    rows.push([
+      f.diagnosticName || '',
+      f.area || '',
+      f.status || '',
+      f.severity || '',
+      (f.notes || '').replace(/[\n\r,]/g, ' '),
+      'Local',
+      f.timestamp || '',
+      'local'
+    ]);
+  });
+
+  // Also try API data if we have it cached
+  const csv = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `purview-feedback-report-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function renderPGView() {
   // Show the product entry points landing
   document.getElementById('pg-content').innerHTML = `

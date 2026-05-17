@@ -1,19 +1,16 @@
 const { app } = require('@azure/functions');
 const { TableClient, TableServiceClient } = require('@azure/data-tables');
-const { DefaultAzureCredential } = require('@azure/identity');
 
 const TABLE_NAME = 'PurviewFeedback';
-const STORAGE_ACCOUNT_URL = process.env.TABLE_STORAGE_URL || 'https://purviewfeedbackstore.table.core.windows.net';
+const CONNECTION_STRING = process.env.TABLE_STORAGE_CONNECTION_STRING;
 const MAX_BODY_SIZE = 10000; // 10KB max per submission
 
-const credential = new DefaultAzureCredential();
-
 function getTableClient() {
-  return new TableClient(STORAGE_ACCOUNT_URL, TABLE_NAME, credential);
+  return TableClient.fromConnectionString(CONNECTION_STRING, TABLE_NAME);
 }
 
 async function ensureTable() {
-  const serviceClient = new TableServiceClient(STORAGE_ACCOUNT_URL, credential);
+  const serviceClient = TableServiceClient.fromConnectionString(CONNECTION_STRING);
   try {
     await serviceClient.createTable(TABLE_NAME);
   } catch (e) {
@@ -54,6 +51,10 @@ app.http('getFeedback', {
   authLevel: 'anonymous', // SWA handles auth via staticwebapp.config.json
   route: 'feedback',
   handler: async (req, context) => {
+    if (!CONNECTION_STRING) {
+      return { status: 500, jsonBody: { error: 'Storage not configured' } };
+    }
+
     const principal = parseClientPrincipal(req);
     if (!principal) {
       return { status: 401, jsonBody: { error: 'Authentication required' } };
@@ -98,6 +99,10 @@ app.http('postFeedback', {
   authLevel: 'anonymous',
   route: 'feedback',
   handler: async (req, context) => {
+    if (!CONNECTION_STRING) {
+      return { status: 500, jsonBody: { error: 'Storage not configured' } };
+    }
+
     const principal = parseClientPrincipal(req);
     if (!principal) {
       return { status: 401, jsonBody: { error: 'Authentication required' } };

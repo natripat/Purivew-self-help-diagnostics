@@ -260,7 +260,7 @@ select.test-status.partial { background: #fff4ce; border-color: #986f0b; color: 
       <h1 style="font-size:28px;color:var(--text);margin-bottom:8px">Purview Self-Help Diagnostics</h1>
       <p style="color:var(--text-secondary);font-size:14px">Review & Testing Portal</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;max-width:1050px;width:100%">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;max-width:1050px;width:100%">
       <!-- Diagnostics Box -->
       <div onclick="enterDiagnosticsView()" style="cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:40px 32px;text-align:center;transition:all .2s ease;box-shadow:var(--shadow-md)" onmouseover="this.style.borderColor='#107c10';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(16,124,16,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none';this.style.boxShadow='var(--shadow-md)'">
         <div style="font-size:48px;margin-bottom:16px">🩺</div>
@@ -297,6 +297,18 @@ select.test-status.partial { background: #fff4ce; border-color: #986f0b; color: 
         </div>
         <p style="margin-top:16px;font-size:11px;color:var(--text-muted)">For: Feature Owners (Shadan, Jovin)</p>
       </div>
+      <!-- All Feedbacks Report Box -->
+      <div onclick="enterFeedbackReportView()" style="cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:40px 32px;text-align:center;transition:all .2s ease;box-shadow:var(--shadow-md)" onmouseover="this.style.borderColor='#d83b01';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(216,59,1,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none';this.style.boxShadow='var(--shadow-md)'">
+        <div style="font-size:48px;margin-bottom:16px">📊</div>
+        <h2 style="font-size:20px;color:var(--text);margin-bottom:8px">All Feedbacks Report</h2>
+        <p style="color:var(--text-secondary);font-size:13px;line-height:1.5">View all diagnostic feedback submitted by team members in one centralized dashboard</p>
+        <div style="margin-top:16px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+          <span style="font-size:11px;background:#3d1a00;color:#ff8c00;padding:3px 10px;border-radius:12px">All Feedback</span>
+          <span style="font-size:11px;background:#3d1a00;color:#ff8c00;padding:3px 10px;border-radius:12px">Team Reports</span>
+          <span style="font-size:11px;background:#3d1a00;color:#ff8c00;padding:3px 10px;border-radius:12px">Analytics</span>
+        </div>
+        <p style="margin-top:16px;font-size:11px;color:var(--text-muted)">For: All Team Members</p>
+      </div>
     </div>
     <div style="margin-top:32px">
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode" style="background:var(--surface);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px">🌙</button>
@@ -319,6 +331,26 @@ select.test-status.partial { background: #fff4ce; border-color: #986f0b; color: 
     </header>
     <div style="max-width:1100px;margin:0 auto;padding:32px">
       <div id="diagnostics-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FEEDBACK REPORT VIEW -->
+<div id="feedback-report-view" style="display:none;">
+  <div style="min-height:100vh;background:var(--bg);padding:0">
+    <header style="background:linear-gradient(135deg,#d83b01 0%,#a52c00 100%);padding:16px 32px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 8px rgba(0,0,0,.2)">
+      <button onclick="leaveFeedbackReportView()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:36px;height:36px;border-radius:8px;cursor:pointer;font-size:18px" title="Back to Home">←</button>
+      <div>
+        <h1 style="font-size:18px;color:#fff;margin:0">📊 All Feedbacks Report</h1>
+        <p style="color:rgba(255,255,255,.7);font-size:12px">Centralized view of all diagnostic feedback from the team</p>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button onclick="refreshFeedbackReport()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">🔄 Refresh</button>
+        <button onclick="exportFeedbackReport()" style="background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:13px">📥 Export CSV</button>
+      </div>
+    </header>
+    <div id="feedback-report-content" style="padding:32px;max-width:1200px;margin:0 auto">
+      <p style="color:var(--text-secondary)">Loading feedback...</p>
     </div>
   </div>
 </div>
