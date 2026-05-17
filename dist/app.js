@@ -592,7 +592,10 @@ async function refreshFeedbackReport() {
     }).join('')}
   </div>`;
 
-  // Feedback table
+  // Store feedback globally for detail view access
+  window._reportFeedback = allFeedback;
+
+  // Feedback list
   if (allFeedback.length === 0) {
     html += `<div style="text-align:center;padding:60px">
       <div style="font-size:48px;margin-bottom:16px">📭</div>
@@ -614,12 +617,12 @@ async function refreshFeedbackReport() {
           </tr>
         </thead>
         <tbody>
-          ${allFeedback.map(f => {
+          ${allFeedback.map((f, idx) => {
             const status = f.testResult || f.status || 'unknown';
             const badge = statusBadges[status] || statusBadges['unknown'];
             const sevColors = { low: '#4caf50', medium: '#ff9800', high: '#f44336', critical: '#d32f2f' };
             const date = f.createdAt ? new Date(f.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
-            return `<tr style="border-bottom:1px solid var(--border)" title="${(f.description || f.notes || '').replace(/"/g, '&quot;').substring(0, 300)}">
+            return `<tr onclick="showFeedbackDetail(${idx})" style="cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s" onmouseover="this.style.background='var(--surface-hover)'" onmouseout="this.style.background=''" title="Click to view details">
               <td style="padding:12px 16px;color:var(--text);max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.diagnosticName || '-'}</td>
               <td style="padding:12px 16px"><span style="font-size:11px;background:${f.area === 'dlp' ? '#0d3320' : '#2a1a4a'};color:${f.area === 'dlp' ? '#4caf50' : '#a08ae0'};padding:2px 8px;border-radius:8px">${(f.area || f.category || '-').toUpperCase()}</span></td>
               <td style="padding:12px 16px"><span style="font-size:11px;background:${badge.bg};color:${badge.color};padding:2px 8px;border-radius:8px">${badge.label}</span></td>
@@ -632,40 +635,70 @@ async function refreshFeedbackReport() {
         </tbody>
       </table>
     </div>`;
-
-    // Expandable details under table
-    html += `<div style="margin-top:24px">
-      <h3 style="font-size:15px;color:var(--text);margin-bottom:16px">📝 Detailed Notes & Evidence</h3>
-      ${allFeedback.filter(f => f.description || f.notes || (f.files && f.files.length)).map((f, i) => `
-        <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin-bottom:12px">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <strong style="color:var(--text);font-size:13px">${f.diagnosticName || 'Unnamed'}</strong>
-            <span style="font-size:11px;color:var(--text-secondary)">${f.submittedBy || '-'} · ${f.createdAt ? new Date(f.createdAt).toLocaleDateString() : '-'}</span>
-          </div>
-          <p style="color:var(--text-secondary);font-size:13px;line-height:1.6;margin:0;white-space:pre-wrap">${(f.description || f.notes || '').substring(0, 1000)}</p>
-          ${f.files && f.files.length ? `
-            <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px">
-              <p style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:8px">📎 Attached Evidence (${f.files.length}):</p>
-              <div style="display:flex;flex-wrap:wrap;gap:12px">
-                ${f.files.map(file => {
-                  if (file.type && file.type.startsWith('image/')) {
-                    return '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;max-width:400px">' +
-                      '<img src="' + file.data + '" alt="' + (file.name || 'screenshot') + '" style="width:100%;display:block;cursor:pointer" onclick="window.open(this.src,\'_blank\')" title="Click to view full size">' +
-                      '<div style="padding:6px 8px;font-size:11px;color:var(--text-secondary);background:var(--surface-hover)">' + (file.name || 'screenshot') + '</div>' +
-                    '</div>';
-                  } else {
-                    return '<div style="background:var(--surface-hover);border:1px solid var(--border);border-radius:6px;padding:8px 12px;font-size:12px;color:var(--text)">' +
-                      '📄 ' + (file.name || 'file') + ' (' + (file.size ? Math.round(file.size/1024) + 'KB' : 'unknown size') + ')' +
-                    '</div>';
-                  }
-                }).join('')}
-              </div>
-            </div>
-          ` : ''}
-        </div>
-      `).join('')}
-    </div>`;
+    html += `<p style="margin-top:12px;font-size:12px;color:var(--text-muted);text-align:center">💡 Click any row to view detailed notes & evidence</p>`;
   }
+
+  container.innerHTML = html;
+}
+
+function showFeedbackDetail(idx) {
+  const f = window._reportFeedback[idx];
+  if (!f) return;
+
+  const container = document.getElementById('feedback-report-content');
+  const statusLabels = { 'pass': '✅ Pass', 'partial': '⚠️ Partial', 'fail': '❌ Fail', 'not-tested': '⏸️ Not Tested', 'working': '✅ Working', 'partially-working': '⚠️ Partial', 'not-working': '❌ Not Working' };
+  const statusColors = { 'pass': '#4caf50', 'partial': '#ff9800', 'fail': '#f44336', 'not-tested': '#9e9e9e', 'working': '#4caf50', 'partially-working': '#ff9800', 'not-working': '#f44336' };
+  const sevColors = { low: '#4caf50', medium: '#ff9800', high: '#f44336', critical: '#d32f2f' };
+  const status = f.testResult || f.status || 'unknown';
+  const date = f.createdAt ? new Date(f.createdAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+
+  let html = `
+    <button onclick="refreshFeedbackReport()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:20px;cursor:pointer;font-size:12px;margin-bottom:24px">← Back to All Feedback</button>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2 style="font-size:18px;color:var(--text);margin:0 0 8px 0">${f.diagnosticName || 'Unnamed Diagnostic'}</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <span style="font-size:11px;padding:3px 10px;border-radius:12px;background:${(statusColors[status]||'#999')+'22'};color:${statusColors[status]||'#999'};font-weight:600">${statusLabels[status] || status}</span>
+            <span style="font-size:11px;padding:3px 10px;border-radius:12px;background:${f.area === 'dlp' ? '#0d3320' : '#2a1a4a'};color:${f.area === 'dlp' ? '#4caf50' : '#a08ae0'}">${(f.area || f.category || '-').toUpperCase()}</span>
+            <span style="font-size:11px;padding:3px 10px;border-radius:12px;background:var(--surface-hover);color:${sevColors[f.severity]||'#999'};font-weight:600">Severity: ${(f.severity||'medium').charAt(0).toUpperCase()+(f.severity||'medium').slice(1)}</span>
+          </div>
+        </div>
+        <div style="text-align:right;font-size:12px;color:var(--text-secondary)">
+          <div>👤 ${f.submittedBy || f.submittedByEmail || '-'}</div>
+          <div style="margin-top:4px">📅 ${date}</div>
+          <div style="margin-top:4px"><span style="font-size:11px;padding:2px 8px;border-radius:8px;background:${f.source === 'cloud' ? '#002b4d' : '#3d2800'};color:${f.source === 'cloud' ? '#0078d4' : '#ff9800'}">${f.source === 'cloud' ? '☁️ Cloud' : '💾 Local'}</span></div>
+        </div>
+      </div>
+
+      <div style="margin-top:20px">
+        <h3 style="font-size:14px;color:var(--text);margin-bottom:10px">📝 Notes</h3>
+        <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:16px">
+          <p style="color:var(--text-secondary);font-size:13px;line-height:1.7;margin:0;white-space:pre-wrap">${(f.description || f.notes || 'No notes provided.').substring(0, 5000)}</p>
+        </div>
+      </div>
+
+      ${f.files && f.files.length ? `
+        <div style="margin-top:24px">
+          <h3 style="font-size:14px;color:var(--text);margin-bottom:10px">📎 Evidence & Screenshots (${f.files.length})</h3>
+          <div style="display:flex;flex-wrap:wrap;gap:16px">
+            ${f.files.map(file => {
+              if (file.type && file.type.startsWith('image/')) {
+                return '<div style="border:1px solid var(--border);border-radius:8px;overflow:hidden;max-width:500px">' +
+                  '<img src="' + file.data + '" alt="' + (file.name || 'screenshot') + '" style="width:100%;display:block;cursor:pointer" onclick="window.open(this.src,\'_blank\')" title="Click to view full size">' +
+                  '<div style="padding:8px 12px;font-size:12px;color:var(--text-secondary);background:var(--surface-hover)">' + (file.name || 'screenshot') + '</div>' +
+                '</div>';
+              } else {
+                return '<div style="background:var(--surface-hover);border:1px solid var(--border);border-radius:6px;padding:10px 14px;font-size:12px;color:var(--text)">' +
+                  '📄 ' + (file.name || 'file') + ' (' + (file.size ? Math.round(file.size/1024) + 'KB' : 'unknown size') + ')' +
+                '</div>';
+              }
+            }).join('')}
+          </div>
+        </div>
+      ` : ''}
+    </div>`;
 
   container.innerHTML = html;
 }
