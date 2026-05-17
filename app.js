@@ -554,8 +554,11 @@ async function refreshFeedbackReport() {
 
   const statusBadges = {
     'working': { color: '#4caf50', bg: '#0d3320', label: '✅ Working' },
+    'pass': { color: '#4caf50', bg: '#0d3320', label: '✅ Pass' },
     'partially-working': { color: '#ff9800', bg: '#3d2800', label: '⚠️ Partial' },
+    'partial': { color: '#ff9800', bg: '#3d2800', label: '⚠️ Partial' },
     'not-working': { color: '#f44336', bg: '#3d0a0a', label: '❌ Not Working' },
+    'fail': { color: '#f44336', bg: '#3d0a0a', label: '❌ Fail' },
     'not-tested': { color: '#9e9e9e', bg: '#2a2a2a', label: '⏸️ Not Tested' },
     'unknown': { color: '#9e9e9e', bg: '#2a2a2a', label: '❓ Unknown' }
   };
