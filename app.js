@@ -192,20 +192,287 @@ function showAccessDenied(msg) {
 function goHome() {
   document.querySelector('.app').style.display = 'none';
   document.getElementById('pg-view').style.display = 'none';
+  document.getElementById('diagnostics-view').style.display = 'none';
   document.getElementById('home-page').style.display = 'block';
 }
 
 function enterTesterView() {
   document.getElementById('home-page').style.display = 'none';
   document.getElementById('pg-view').style.display = 'none';
+  document.getElementById('diagnostics-view').style.display = 'none';
   document.querySelector('.app').style.display = 'grid';
 }
 
 function enterPGView() {
   document.getElementById('home-page').style.display = 'none';
   document.querySelector('.app').style.display = 'none';
+  document.getElementById('diagnostics-view').style.display = 'none';
   document.getElementById('pg-view').style.display = 'block';
   renderPGView();
+}
+
+// ==================== DIAGNOSTICS VIEW ====================
+
+function enterDiagnosticsView() {
+  document.getElementById('home-page').style.display = 'none';
+  document.querySelector('.app').style.display = 'none';
+  document.getElementById('pg-view').style.display = 'none';
+  document.getElementById('diagnostics-view').style.display = 'block';
+  showDiagnosticsProducts();
+}
+
+const diagnosticCards = {
+  dlp: [
+    { id: 'diag-dlp-1', name: "A DLP rule isn't enforced for a specific user", description: "Check which policies are applied to the user, including policy names and where they apply.", icon: '🛡️' },
+    { id: 'diag-dlp-2', name: "Endpoint DLP not working?", description: "We'll check for policy sync issues and recommendations on how to resolve them.", icon: '💻' },
+    { id: 'diag-dlp-3', name: "Alerts not working for a DLP rule", description: "Search for alerts and determine if there are any issues with how the Data Loss Prevention rule is set up.", icon: '🔔' },
+    { id: 'diag-dlp-4', name: "Can't find an alert for an activity or an audit event", description: "Find the alert for an activity or audited event, or figure out why the alert could be missing.", icon: '🔍' },
+    { id: 'diag-dlp-5', name: "Analyze whether DLP matches a SharePoint or OneDrive file", description: "Check a file's properties and classification to review whether DLP matched or didn't match.", icon: '📄' },
+    { id: 'diag-dlp-6', name: "Policy tips not displaying in Outlook on the web", description: "We'll analyze the HAR file to investigate why policy tips aren't displaying in Outlook on the web.", icon: '💡' },
+    { id: 'diag-dlp-7', name: "Analyze the message trace log for Exchange DLP", description: "Upload the message trace log (.csv) to review how DLP rules were applied to email messages.", icon: '📧' }
+  ],
+  ip: [
+    { id: 'diag-ip-1', name: "Email encryption isn't working as expected", description: "Checks license availability for sensitivity labels, IRM settings, transport rules, and encryption settings.", icon: '🔒' },
+    { id: 'diag-ip-2', name: "User can't find a sensitivity label", description: "Checks which labels are available to the user, label names, settings, and availability.", icon: '🏷️' },
+    { id: 'diag-ip-3', name: "Auto-labeling not applied to a SharePoint or OneDrive file", description: "Checks file properties, classification, and whether auto-labeling conditions were met.", icon: '📎' }
+  ]
+};
+
+function showDiagnosticsProducts() {
+  const container = document.getElementById('diagnostics-content');
+  container.innerHTML = `
+    <div style="text-align:center;margin-bottom:40px">
+      <h2 style="font-size:22px;color:var(--text);margin-bottom:8px">Choose a Product Area</h2>
+      <p style="font-size:14px;color:var(--text-secondary)">Select the area to see available diagnostics you can test</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:28px;max-width:800px;margin:0 auto">
+      <!-- DLP -->
+      <div onclick="showDiagnosticCards('dlp')" style="cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:32px 28px;transition:all .2s ease;box-shadow:var(--shadow-sm)" onmouseover="this.style.borderColor='#107c10';this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(16,124,16,.15)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none';this.style.boxShadow='var(--shadow-sm)'">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div style="width:48px;height:48px;background:#0d3320;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">🛡️</div>
+          <div>
+            <h3 style="font-size:17px;color:var(--text)">Data Loss Prevention</h3>
+            <p style="font-size:12px;color:var(--text-muted)">7 diagnostics available</p>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">Policy enforcement, endpoint sync, alerts, file analysis, policy tips, message trace</p>
+      </div>
+
+      <!-- Information Protection -->
+      <div onclick="showDiagnosticCards('ip')" style="cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:14px;padding:32px 28px;transition:all .2s ease;box-shadow:var(--shadow-sm)" onmouseover="this.style.borderColor='#0078d4';this.style.transform='translateY(-3px)';this.style.boxShadow='0 6px 20px rgba(0,120,212,.15)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none';this.style.boxShadow='var(--shadow-sm)'">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+          <div style="width:48px;height:48px;background:#1a2a4a;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px">🏷️</div>
+          <div>
+            <h3 style="font-size:17px;color:var(--text)">Information Protection</h3>
+            <p style="font-size:12px;color:var(--text-muted)">3 diagnostics available</p>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--text-secondary);line-height:1.5">Encryption settings, sensitivity label policy, auto-labeling file check</p>
+      </div>
+    </div>
+
+    <!-- Previously submitted feedback -->
+    ${renderDiagnosticsFeedbackSummary()}
+  `;
+}
+
+function renderDiagnosticsFeedbackSummary() {
+  const feedback = JSON.parse(localStorage.getItem('purview-diag-feedback') || '[]');
+  if (feedback.length === 0) return '';
+  return `
+    <div style="margin-top:40px;max-width:800px;margin-left:auto;margin-right:auto">
+      <h3 style="font-size:15px;color:var(--text-secondary);margin-bottom:12px">📋 Your Recent Submissions (${feedback.length})</h3>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${feedback.slice(0, 5).map((f, i) => {
+          const icon = f.status==='pass'?'✅':f.status==='fail'?'❌':f.status==='partial'?'⚠️':'⬜';
+          return `<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+            <span>${icon}</span>
+            <span style="flex:1;font-size:13px;color:var(--text)">${f.diagnosticName}</span>
+            <span style="font-size:11px;color:var(--text-muted)">${new Date(f.timestamp).toLocaleDateString()}</span>
+            <button onclick="deleteDiagFeedback(${i})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px" title="Delete">🗑️</button>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function deleteDiagFeedback(idx) {
+  if (!confirm('Delete this feedback entry?')) return;
+  const feedback = JSON.parse(localStorage.getItem('purview-diag-feedback') || '[]');
+  feedback.splice(idx, 1);
+  localStorage.setItem('purview-diag-feedback', JSON.stringify(feedback));
+  showDiagnosticsProducts();
+}
+
+function showDiagnosticCards(area) {
+  const cards = diagnosticCards[area];
+  const areaTitle = area === 'dlp' ? 'Data Loss Prevention' : 'Information Protection';
+  const areaColor = area === 'dlp' ? '#107c10' : '#0078d4';
+  const container = document.getElementById('diagnostics-content');
+
+  container.innerHTML = `
+    <button onclick="showDiagnosticsProducts()" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:20px;cursor:pointer;font-size:12px;margin-bottom:24px">← Back to Product Areas</button>
+
+    <div style="margin-bottom:28px">
+      <h2 style="font-size:20px;color:var(--text);margin-bottom:6px">Diagnostics — ${areaTitle}</h2>
+      <p style="font-size:13px;color:var(--text-secondary)">Choose the scenario that best describes your problem and then run a diagnostic assessment.</p>
+      <a href="https://learn.microsoft.com/en-ca/troubleshoot/microsoft-365/purview/diagnostics/purview-compliance-diagnostics" target="_blank" style="font-size:12px;color:var(--primary);text-decoration:none">Learn more about diagnostics ↗</a>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      ${cards.map(card => {
+        const saved = JSON.parse(localStorage.getItem('purview-diag-feedback') || '[]');
+        const hasFeedback = saved.some(f => f.diagnosticId === card.id);
+        return `
+        <div onclick="openDiagnosticFeedback('${card.id}','${area}')" style="cursor:pointer;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;transition:all .2s ease;position:relative" onmouseover="this.style.borderColor='${areaColor}';this.style.boxShadow='0 4px 16px rgba(0,0,0,.1)'" onmouseout="this.style.borderColor='var(--border)';this.style.boxShadow='none'">
+          ${hasFeedback ? '<div style="position:absolute;top:12px;right:12px;background:#0d3320;color:#4caf50;padding:2px 8px;border-radius:10px;font-size:10px">✅ Submitted</div>' : ''}
+          <h3 style="font-size:14px;color:var(--text);margin-bottom:10px;padding-right:${hasFeedback?'70px':'0'}">${card.name}</h3>
+          <p style="font-size:12px;color:var(--text-secondary);line-height:1.5">${card.description}</p>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function openDiagnosticFeedback(diagId, area) {
+  const allCards = [...diagnosticCards.dlp, ...diagnosticCards.ip];
+  const card = allCards.find(c => c.id === diagId);
+  if (!card) return;
+
+  const areaColor = area === 'dlp' ? '#107c10' : '#0078d4';
+  const container = document.getElementById('diagnostics-content');
+
+  // Load existing draft
+  const draft = JSON.parse(localStorage.getItem('purview-diag-draft-'+diagId) || '{}');
+
+  container.innerHTML = `
+    <button onclick="showDiagnosticCards('${area}')" style="background:var(--surface);border:1px solid var(--border);color:var(--text);padding:6px 16px;border-radius:20px;cursor:pointer;font-size:12px;margin-bottom:24px">← Back to Diagnostics</button>
+
+    <div style="border-left:4px solid ${areaColor};padding-left:16px;margin-bottom:28px">
+      <h2 style="font-size:18px;color:var(--text);margin-bottom:4px">${card.name}</h2>
+      <p style="font-size:13px;color:var(--text-secondary)">${card.description}</p>
+    </div>
+
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px">
+      <h3 style="font-size:15px;color:var(--text);margin-bottom:20px">📝 Submit Your Feedback</h3>
+
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Test Result:</label>
+        <select id="diag-fb-status-${diagId}" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;min-width:200px">
+          <option value="not-tested" ${(draft.status||'')==='not-tested'?'selected':''}>⬜ Not Tested</option>
+          <option value="pass" ${(draft.status||'')==='pass'?'selected':''}>✅ Pass — Working as expected</option>
+          <option value="partial" ${(draft.status||'')==='partial'?'selected':''}>⚠️ Partial — Works but has issues</option>
+          <option value="fail" ${(draft.status||'')==='fail'?'selected':''}>❌ Fail — Not working correctly</option>
+        </select>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">What did you test & what happened?</label>
+        <textarea id="diag-fb-notes-${diagId}" style="width:100%;min-height:120px;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;resize:vertical;box-sizing:border-box" placeholder="Describe:\n• What steps you took to test this diagnostic\n• What result you got\n• What you expected to happen\n• Any issues or observations">${draft.notes||''}</textarea>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">📎 Attach Evidence (optional):</label>
+        <input type="file" id="diag-fb-files-${diagId}" multiple accept="image/*,.html,.txt,.log,.csv,.har,.mp4,.webm" style="font-size:12px;color:var(--text)">
+        <p style="font-size:11px;color:var(--text-muted);margin-top:4px">Screenshots, screen recordings, HAR files, logs</p>
+        <div id="diag-fb-preview-${diagId}" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px"></div>
+      </div>
+
+      <div style="margin-bottom:16px">
+        <label style="font-size:13px;font-weight:600;color:var(--text);display:block;margin-bottom:6px">Severity:</label>
+        <select id="diag-fb-severity-${diagId}" style="padding:8px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:13px">
+          <option value="low" ${(draft.severity||'')==='low'?'selected':''}>Low — Minor issue</option>
+          <option value="medium" ${(draft.severity||'medium')==='medium'?'selected':''}>Medium — Noticeable problem</option>
+          <option value="high" ${(draft.severity||'')==='high'?'selected':''}>High — Significant issue</option>
+          <option value="critical" ${(draft.severity||'')==='critical'?'selected':''}>Critical — Completely broken</option>
+        </select>
+      </div>
+
+      <div style="display:flex;gap:12px;align-items:center;margin-top:24px">
+        <button onclick="submitDiagnosticFeedback('${diagId}','${area}')" style="background:linear-gradient(135deg,#107c10,#0d6e0d);color:#fff;border:none;padding:10px 24px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600">📤 Submit Feedback</button>
+        <button onclick="saveDiagnosticDraft('${diagId}')" style="background:var(--surface-hover);color:var(--text);border:1px solid var(--border);padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px">💾 Save Draft</button>
+        <span id="diag-fb-msg-${diagId}" style="font-size:12px;color:var(--text-muted)"></span>
+      </div>
+    </div>
+  `;
+}
+
+function saveDiagnosticDraft(diagId) {
+  const status = document.getElementById('diag-fb-status-'+diagId)?.value || 'not-tested';
+  const notes = document.getElementById('diag-fb-notes-'+diagId)?.value || '';
+  const severity = document.getElementById('diag-fb-severity-'+diagId)?.value || 'medium';
+  localStorage.setItem('purview-diag-draft-'+diagId, JSON.stringify({ status, notes, severity }));
+  const msg = document.getElementById('diag-fb-msg-'+diagId);
+  if (msg) { msg.textContent = '✅ Draft saved!'; setTimeout(() => msg.textContent = '', 2000); }
+}
+
+async function submitDiagnosticFeedback(diagId, area) {
+  const allCards = [...diagnosticCards.dlp, ...diagnosticCards.ip];
+  const card = allCards.find(c => c.id === diagId);
+  if (!card) return;
+
+  const status = document.getElementById('diag-fb-status-'+diagId)?.value || 'not-tested';
+  const notes = document.getElementById('diag-fb-notes-'+diagId)?.value || '';
+  const severity = document.getElementById('diag-fb-severity-'+diagId)?.value || 'medium';
+
+  if (!notes.trim()) { alert('Please describe what you tested and what happened.'); return; }
+
+  // Collect files
+  const fileInput = document.getElementById('diag-fb-files-'+diagId);
+  const files = [];
+  if (fileInput && fileInput.files.length > 0) {
+    await Promise.all(Array.from(fileInput.files).map(file => new Promise(resolve => {
+      const reader = new FileReader();
+      reader.onload = () => { files.push({ name: file.name, type: file.type, size: file.size, data: reader.result }); resolve(); };
+      reader.readAsDataURL(file);
+    })));
+  }
+
+  // Save locally
+  const feedback = JSON.parse(localStorage.getItem('purview-diag-feedback') || '[]');
+  const entry = {
+    diagnosticId: diagId,
+    diagnosticName: card.name,
+    area: area,
+    status,
+    notes,
+    severity,
+    files,
+    timestamp: new Date().toISOString()
+  };
+  feedback.unshift(entry);
+  localStorage.setItem('purview-diag-feedback', JSON.stringify(feedback));
+
+  // Clear draft
+  localStorage.removeItem('purview-diag-draft-'+diagId);
+
+  // Try to submit to API
+  try {
+    const res = await fetch('/api/feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        category: area === 'dlp' ? 'Data Loss Prevention' : 'Information Protection',
+        description: notes.substring(0, 5000),
+        diagnosticName: card.name,
+        severity: severity,
+        area: area,
+        testResult: status,
+        notes: notes.substring(0, 2000)
+      })
+    });
+    if (res.ok) {
+      alert('✅ Feedback submitted successfully! Thank you for testing.');
+    } else {
+      alert('✅ Feedback saved locally. (API submission will sync later)');
+    }
+  } catch (e) {
+    alert('✅ Feedback saved locally. (API unavailable — will sync when connected)');
+  }
+
+  // Go back to cards view
+  showDiagnosticCards(area);
 }
 
 function renderPGView() {

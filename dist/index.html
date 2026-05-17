@@ -260,7 +260,19 @@ select.test-status.partial { background: #fff4ce; border-color: #986f0b; color: 
       <h1 style="font-size:28px;color:var(--text);margin-bottom:8px">Purview Self-Help Diagnostics</h1>
       <p style="color:var(--text-secondary);font-size:14px">Review & Testing Portal</p>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;max-width:700px;width:100%">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:32px;max-width:1050px;width:100%">
+      <!-- Diagnostics Box -->
+      <div onclick="enterDiagnosticsView()" style="cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:40px 32px;text-align:center;transition:all .2s ease;box-shadow:var(--shadow-md)" onmouseover="this.style.borderColor='#107c10';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(16,124,16,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none';this.style.boxShadow='var(--shadow-md)'">
+        <div style="font-size:48px;margin-bottom:16px">🩺</div>
+        <h2 style="font-size:20px;color:var(--text);margin-bottom:8px">Diagnostics</h2>
+        <p style="color:var(--text-secondary);font-size:13px;line-height:1.5">Test a diagnostic scenario and submit your feedback for the team</p>
+        <div style="margin-top:16px;display:flex;gap:6px;justify-content:center;flex-wrap:wrap">
+          <span style="font-size:11px;background:#0d3320;color:#4caf50;padding:3px 10px;border-radius:12px">DLP</span>
+          <span style="font-size:11px;background:#0d3320;color:#4caf50;padding:3px 10px;border-radius:12px">Info Protection</span>
+          <span style="font-size:11px;background:#0d3320;color:#4caf50;padding:3px 10px;border-radius:12px">Submit Feedback</span>
+        </div>
+        <p style="margin-top:16px;font-size:11px;color:var(--text-muted)">For: All Team Members</p>
+      </div>
       <!-- Tester Box -->
       <div onclick="enterTesterView()" style="cursor:pointer;background:var(--surface);border:2px solid var(--border);border-radius:16px;padding:40px 32px;text-align:center;transition:all .2s ease;box-shadow:var(--shadow-md)" onmouseover="this.style.borderColor='#0078d4';this.style.transform='translateY(-4px)';this.style.boxShadow='0 8px 24px rgba(0,120,212,.2)'" onmouseout="this.style.borderColor='var(--border)';this.style.transform='none';this.style.boxShadow='var(--shadow-md)'">
         <div style="font-size:48px;margin-bottom:16px">🧪</div>
@@ -288,6 +300,25 @@ select.test-status.partial { background: #fff4ce; border-color: #986f0b; color: 
     </div>
     <div style="margin-top:32px">
       <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light mode" style="background:var(--surface);border:1px solid var(--border);color:var(--text);width:36px;height:36px;border-radius:50%;cursor:pointer;font-size:16px">🌙</button>
+    </div>
+  </div>
+</div>
+
+<!-- DIAGNOSTICS VIEW -->
+<div id="diagnostics-view" style="display:none;">
+  <div style="min-height:100vh;background:var(--bg);padding:0">
+    <header style="background:linear-gradient(135deg,#107c10 0%,#0d6e0d 100%);padding:16px 32px;display:flex;align-items:center;gap:16px;box-shadow:0 2px 8px rgba(0,0,0,.2)">
+      <button onclick="goHome()" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 14px;border-radius:20px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:6px" title="Back to Home">🏠 <span>Home</span></button>
+      <div>
+        <h1 style="color:#fff;font-size:16px;font-weight:600">Diagnostics — Test & Submit Feedback</h1>
+        <p style="color:rgba(255,255,255,.7);font-size:12px">Select a diagnostic, test it, and share your feedback</p>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px">
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:50%;cursor:pointer;font-size:16px">🌙</button>
+      </div>
+    </header>
+    <div style="max-width:1100px;margin:0 auto;padding:32px">
+      <div id="diagnostics-content"></div>
     </div>
   </div>
 </div>
