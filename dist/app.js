@@ -2,6 +2,8 @@
 
 // ✏️ TO UPDATE ACCESS: Add or remove aliases/emails below, then redeploy
 const ALLOWED_USERS = ['natripat', 'kchopra']; // Add aliases or full emails here
+const ADMIN_USERS = ['natripat', 'kchopra']; // Only these users see Tester & PG Review portals
+let isAdmin = false; // Set during validateAccess()
 
 // ==================== AI CONFIGURATION ====================
 
@@ -156,22 +158,33 @@ async function validateAccess() {
     // Azure AD Free tier may mask emails (e.g., "kch*****@microsoft.com")
     const alias = userDetail.includes('@') ? userDetail.split('@')[0] : userDetail;
     const unmaskedAlias = alias.replace(/\*+/g, ''); // strip mask chars
-    if (ALLOWED_USERS.some(a => {
+    const matchUser = (list) => list.some(a => {
       const al = a.toLowerCase();
       return al === alias || al === userDetail || alias.startsWith(al.substring(0,3)) || al.startsWith(unmaskedAlias);
-    })) {
+    });
+    if (matchUser(ALLOWED_USERS)) {
+      isAdmin = matchUser(ADMIN_USERS);
       document.getElementById('home-page').style.display = 'block';
       document.getElementById('access-gate').style.display = 'none';
+      applyAdminVisibility();
       return true;
     }
     showAccessDenied(`Access denied for "${userDetail}". Contact natripat to request access.`);
     return false;
   } catch (e) {
-    // If auth endpoint unavailable (local dev), show home page
+    // If auth endpoint unavailable (local dev), treat as admin
+    isAdmin = true;
     document.getElementById('home-page').style.display = 'block';
     document.getElementById('access-gate').style.display = 'none';
+    applyAdminVisibility();
     return true;
   }
+}
+
+function applyAdminVisibility() {
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = isAdmin ? '' : 'none';
+  });
 }
 
 function showAccessDenied(msg) {
